@@ -36,16 +36,29 @@ _______________
 5. demarre Phyphox connecte au meme IP que votre ordi
 6. node bridge.js <PHONE_IP_PORT> <API_KEY> <DEVICE_ID> <LOCATION_NAME> avec Phyphox qui roule sur le cellulaire
 
-*peut utiliser node seed.js <baseline> <startOffset> <endOffset> pour populer le DB. Baseline correspond à la valeur moyenne de décibels souhaitée (ex: 35.0) et le script crée des mesures qui fluctue autour du basline de 3 dB , startOffset définit le point de départ de la simulation en minutes (ex: 60 pour commencer il y a 60 minutes), et endOffset définit la fin de la fenêtre temporelle (ex: 0 pour aller jusqu'à l'instant présent). De cette façon, vous pouvez peupler la base de données sur plusieurs périodes afin de mieux la tester.
+Note: Peut utiliser node seed.js <baseline> <startOffset> <endOffset> pour populer le DB. Baseline correspond à la valeur moyenne de décibels souhaitée (ex: 35.0) et le script crée des mesures qui fluctue autour du basline de 3 dB , startOffset définit le point de départ de la simulation en minutes (ex: 60 pour commencer il y a 60 minutes), et endOffset définit la fin de la fenêtre temporelle (ex: 0 pour aller jusqu'à l'instant présent). De cette façon, vous pouvez peupler la base de données sur plusieurs périodes afin de mieux la tester.
 __________
 Endpoints:
 __________
 
-POST /devices                        enregistre un nouveau appareil (retourne une apiKey)
-GET /devices                         liste tous les appareils enregistrés
-POST /measurements                   enregistre une nouvelle mesure sonore (nécessite x-api-key)
-POST /observations	                 enregistre une observation qualitative manuelle (nécessite x-api-key)
-GET /ambiance/:location/quiet-hours  retourne les heures les plus calmes par créneaux horaires (trié)
-GET /ambiance/:location/history      historique des données selon le paramètre last
-GET /ambiance/:location/portrait     portrait sémantique (résumé) des 30 dernières minutes
+POST /devices                        
+enregistre un nouveau appareil (retourne une apiKey)
+
+GET /devices                         
+liste tous les appareils enregistrés
+
+POST /measurements                   
+enregistre une nouvelle mesure sonore (nécessite x-api-key)
+
+POST /observations	                 
+enregistre une observation qualitative manuelle (nécessite x-api-key)
+
+GET /ambiance/:location/quiet-hours  
+retourne les heures les plus calmes par créneaux horaires (trié)
+
+GET /ambiance/:location/history      
+historique des données selon le paramètre last
+
+GET /ambiance/:location/portrait     
+portrait sémantique (résumé) des 30 dernières minutes
 
