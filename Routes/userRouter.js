@@ -16,5 +16,12 @@ router.post('/register', async (req, res) =>{
     return res.status(400).json({ success: false, error: "Champ requis manquant" });
   }
   
+  const emailTaken = await User.exists({email});
+  const usernameTaken = await User.exists({username});
+
+  if (emailTaken || usernameTaken){
+    return res.status(409).json({success: false, errror: "Email ou nom d'utilisateur deja utulise"})
+  }
+
 
 })
