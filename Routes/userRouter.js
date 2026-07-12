@@ -15,10 +15,6 @@ router.post('/register', async (req, res) =>{
   if (!username || !email || !password){
     return res.status(400).json({ success: false, error: "Champ requis manquant" });
   }
-
   
-
-
-
 
 })
