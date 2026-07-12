@@ -3,6 +3,7 @@ dotenv.config();
 
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path');
 
 const devicesRouter = require('./Routes/devicesRouter');
 const collectRouter = require('./Routes/collectRouter');
@@ -11,9 +12,16 @@ const ambianceRouter = require('./Routes/ambianceRouter');
 const app = express();
 app.use(express.json());
 
-app.use('/', devicesRouter);
-app.use('/', collectRouter);
-app.use('/', ambianceRouter);
+app.use('/api', devicesRouter);
+app.use('/api', collectRouter);
+app.use('/api', ambianceRouter);
+
+const clientBuildPath = path.join(__dirname, 'client', 'dist');
+app.use(express.static(clientBuildPath));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'))
+})
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connecté à MongoDB'))
