@@ -9,7 +9,8 @@ const devicesSchema = new mongoose.Schema({
         type: String,
         unique: true,
         required:true
-    }
+    },
+    location : {type: mongoose.Schema.Types.ObjectId, ref:'location'},
 })
 
 module.exports = mongoose.model("device", devicesSchema);
