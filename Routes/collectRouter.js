@@ -19,7 +19,11 @@ router.post("/measurements", auth, async (req, res) => {
         return res.status(201).json({ success: true, data: measurement });
 
     } catch (error) {
-        return res.status(400).json({ success: false, error: error.message });
+        if (error instanceof Error){
+            return res.status(400).json({success: false, error: error.message})
+        }
+
+        return res.status(400).json ({success:false,error:"Unknown error"});
     }
 });
 
@@ -35,8 +39,13 @@ router.post("/observations", auth, async (req, res) => {
 
         await manualLog.save();
         return res.status(201).json({ success: true, data: manualLog });
+
     } catch (error) {
-        return res.status(400).json({ success: false, error: error.message });
+        if (error instanceof Error){
+            return res.status(400).json({success: false, error: error.message})
+        }
+
+        return res.status(400).json ({success:false,error:"Unknown error"});
     }
 });
 
