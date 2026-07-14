@@ -8,10 +8,12 @@ const path = require('path');
 const devicesRouter = require('./Routes/devicesRouter');
 const collectRouter = require('./Routes/collectRouter');
 const ambianceRouter = require('./Routes/ambianceRouter');
+const userRouter = require('../Routes/userRouter');
 
 const app = express();
 app.use(express.json());
 
+app.use('/api', userRouter);
 app.use('/api', devicesRouter);
 app.use('/api', collectRouter);
 app.use('/api', ambianceRouter);

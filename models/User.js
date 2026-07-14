@@ -1,5 +1,6 @@
-const mongoose = require('mongoose')
-const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose'); 
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
     email:{
@@ -24,7 +25,7 @@ const UserSchema = new mongoose.Schema({
     }]
 });
 
-UserSchema.static.validateUser = async function (email, password) {
+UserSchema.statics.validateUser = async function (email, password) {
     const user = await this.findOne({ email });
     if (!user) {
         throw new Error("Erreur : le compte recherché n'existe pas !");

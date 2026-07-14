@@ -1,4 +1,5 @@
 const Device = require('../models/Device');
+const User = require('../models/User');
 
 async function auth(req, res, next) {
     try {

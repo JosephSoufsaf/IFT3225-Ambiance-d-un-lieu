@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const express = require('express');
-const router = new expres.Router();
+const router = new express.Router();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { userValidation } = require('../middlewares/middleware')
@@ -21,13 +21,14 @@ router.post('/register', async (req, res) =>{
     const usernameTaken = await User.exists({username});
 
     if (emailTaken || usernameTaken){
-      return res.status(409).json({success: false, errror: "Email ou nom d'utilisateur deja utulise"});
+      return res.status(409).json({success: false, error: "Email ou nom d'utilisateur deja utulise"});
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({hashedPassword});
+    const newUser = new User({ email, username, password: hashedPassword });
+    await newUser.save();
 
-    return res.status(201).json({success:true, data: newUser});
+    return res.status(201).json({success:true, data: { _id: newUser._id, email: newUser.email, username: newUser.username }});
 
   }catch(error){
     return res.status(400).json({success:false, error: error.message});
@@ -51,7 +52,7 @@ router.post("/logout", userValidation ,async (req, res) => {
     try {
         const tokenToRemove = req.authToken;
         if (!tokenToRemove) {
-          res.status(400).json({success: false, error: "Token d'authentification manquant"})
+          return res.status(400).json({success: false, error: "Token d'authentification manquant"});
         }
 
         req.user.authTokens = req.user.authTokens.filter((token) => {
@@ -68,6 +69,11 @@ router.post("/logout", userValidation ,async (req, res) => {
 router.delete("/account/:id", userValidation, async (req, res) => {
     try {
 
+        //url id has to be the one of the user now and not another user's
+         if (req.params.id !== req.user._id.toString()) {
+            return res.status(403).json({ success: false, error: "Vous ne pouvez supprimer que votre propre compte" });
+        }
+
         const user = await User.findByIdAndDelete(req.params.id);
         // Trouver propriété _id dans le document de l'utilisateur
 
@@ -82,4 +88,4 @@ router.delete("/account/:id", userValidation, async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;
