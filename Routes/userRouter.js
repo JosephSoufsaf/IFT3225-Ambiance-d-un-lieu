@@ -3,25 +3,83 @@ const express = require('express');
 const router = new expres.Router();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const { userValidation } = require('../middlewares/middleware')
 
 
 
 router.post('/register', async (req, res) =>{
-  const password = req.body.password;
-  const email = req.body.email;
-  const username = req.body.username;
-  const hashedPassword = await bcrypt.hash(password, 10);
+  try{
+    const password = req.body.password;
+    const email = req.body.email;
+    const username = req.body.username;
 
-  if (!username || !email || !password){
-    return res.status(400).json({ success: false, error: "Champ requis manquant" });
+    if (!username || !email || !password){
+      return res.status(400).json({ success: false, error: "Champ requis manquant" });
+    }
+    
+    const emailTaken = await User.exists({email});
+    const usernameTaken = await User.exists({username});
+
+    if (emailTaken || usernameTaken){
+      return res.status(409).json({success: false, errror: "Email ou nom d'utilisateur deja utulise"});
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({hashedPassword});
+
+    return res.status(201).json({success:true, data: newUser});
+
+  }catch(error){
+    return res.status(400).json({success:false, error: error.message});
   }
-  
-  const emailTaken = await User.exists({email});
-  const usernameTaken = await User.exists({username});
+});
 
-  if (emailTaken || usernameTaken){
-    return res.status(409).json({success: false, errror: "Email ou nom d'utilisateur deja utulise"})
-  }
+router.post("/login", userValidation ,async (req, res) => {
+    try {
 
+        const user = req.user;
+        const authToken = await user.generateAuthTokenAndSaveUser();
 
-})
+        res.status(200).send({ user, authToken });
+
+    } catch (e) {
+        res.status(400).send(e.message);
+    }
+});
+
+router.post("/logout", userValidation ,async (req, res) => {
+    try {
+        const tokenToRemove = req.authToken;
+        if (!tokenToRemove) {
+          res.status(400).json({success: false, error: "Token d'authentification manquant"})
+        }
+
+        req.user.authTokens = req.user.authTokens.filter((token) => {
+            return token.authToken !== req.authToken;
+        });
+
+        await req.user.save();
+        res.send("Déconnexion effectuée avec succès !");
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+router.delete("/account/:id", userValidation, async (req, res) => {
+    try {
+
+        const user = await User.findByIdAndDelete(req.params.id);
+        // Trouver propriété _id dans le document de l'utilisateur
+
+        if (!user) {
+            return res.status(404).send({ error: "Utilisateur introuvable" });
+        }
+
+        return res.status(201).json({success: true, data: user, message: "Compte supprimé"});
+
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+export default router;
