@@ -24,4 +24,4 @@ export async function loginUser({ email, password }) {
         throw new Error(data.error || data.message || 'Erreur lors de la connexion');
     }
     return data;
-}
+} 
