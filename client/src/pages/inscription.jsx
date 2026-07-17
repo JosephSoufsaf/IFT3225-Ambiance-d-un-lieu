@@ -19,10 +19,11 @@ export default function Inscription() {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nom d'utilisateur" />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
+        <form onSubmit={handleSubmit} className='flex flex-col items-center gap-y-6 m-4'>
+            <h1 className='underline'>Formulaire d'inscription</h1>
+            <input className='inputText' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+            <input className='inputText' type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nom d'utilisateur" />
+            <input className='inputText' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
             <button type="submit">S'inscrire</button>
             {error && <p>{error}</p>}
         </form>
