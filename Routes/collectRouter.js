@@ -2,7 +2,7 @@ const Measurement = require("../models/Measurement");
 const Observation = require('../models/Observation')
 const express = require('express');
 const router = new express.Router();
-const auth = require('../middlewares/middleware');
+const {auth} = require('../middlewares/middleware');
 
 router.post("/measurements", auth, async (req, res) => {
     try {
