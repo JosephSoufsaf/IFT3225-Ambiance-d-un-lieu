@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+.lieux-page {
+    @apply flex flex-col items-center gap-6 p-4;
+}
+
+.lieux-title {
+    @apply text-2xl underline;
+}
+
+.lieux-message {
+    @apply text-gray-500;
+}
+
+.lieux-error {
+    @apply text-red-600;
+}
+
+.lieux-list {
+    @apply flex flex-wrap justify-center gap-3;
+}
+
+.lieu-btn {
+    @apply px-4 py-2 rounded-lg border border-gray-300 transition-all hover:bg-gray-100;
+}
+
+.lieu-btn-active {
+    @apply border-black bg-gray-200;
+}
+
+.lieu-card {
+    @apply w-full max-w-sm border rounded-xl p-4 shadow-sm flex flex-col gap-2;
+}
+
+.lieu-card-title {
+    @apply text-xl font-semibold;
+}
+
+.lieu-card-detail {
+    @apply text-sm text-gray-600;
+}
