@@ -29,7 +29,7 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
             hourlyGroups[hour].count += 1;
         });
 
-        // Calcule la moyenne par heure et trie
+         // Calcule la moyenne par heure et trie
         const hourlyRanking = Object.entries(hourlyGroups)
             .map(([hour, data]) => ({
                 hourSlot24h: parseInt(hour),

@@ -23,3 +23,22 @@ export async function loginUser({ email, password }) {
     }
     return data;
 } 
+
+
+export async function getLocations() {
+    const res = await fetch(`api/locations`);
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors du chargement des lieux');
+    }
+    return data;
+}
+
+export async function getLocationByName(name) {
+    const res = await fetch(`api/locations/${encodeURIComponent(name)}`);
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || 'Ce lieu est introuvable');
+    }
+    return data;
+}

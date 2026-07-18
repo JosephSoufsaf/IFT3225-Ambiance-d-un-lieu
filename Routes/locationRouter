@@ -1,0 +1,50 @@
+const Location = require("../models/Location");
+const express = require('express');
+const router = new express.Router();
+
+
+router.get('/locations', async (req, res) => {
+    try {
+        const locations = await Location.find({});
+        return res.status(200).json({ success: true, data: locations });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+router.get('/locations/:name', async (req, res) => {
+    try {
+        const location = await Location.findOne({ name: req.params.name });
+        if (!location) {
+            return res.status(404).json({ success: false, error: "Ce lieu n'existe pas" });
+        }
+        return res.status(200).json({ success: true, data: location });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+router.post('/locations', async (req, res) => {
+    try {
+        const { name, latitude, longitude } = req.body;
+
+        if (!name || latitude === undefined || longitude === undefined) {
+            return res.status(400).json({ success: false, error: "Champ requis manquant" });
+        }
+
+        const existingLocation = await Location.exists({ name });
+        if (existingLocation) {
+            return res.status(409).json({ success: false, error: "Ce lieu existe déjà" });
+        }
+
+        const location = new Location({ name, latitude, longitude });
+        await location.save();
+        return res.status(201).json({ success: true, data: location });
+    } catch (error) {
+        return res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+module.exports = router;
