@@ -42,3 +42,13 @@ export async function getLocationByName(name) {
     }
     return data;
 }
+
+export async function logout(token) {
+    const res = await fetch('api/logout', {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+    });
+    console.log(res);
+} 

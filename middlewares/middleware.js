@@ -40,4 +40,26 @@ async function userValidation (req, res, next) {
         next(error);
     }
 }
-module.exports = {auth, userValidation};
+
+async function tokenAuth (req, res, next) {
+    try {
+        const authHeader = req.header('Authorization');
+        if (!authHeader) {
+            return res.status(401).send("Pas de header Authorization avec Bearer token");
+        }
+
+        const authToken = authHeader.replace("Bearer ", "");
+
+        const user = await User.findOne({'authTokens.authToken': authToken});
+        
+        req.user = user;
+        req.authToken = authToken;
+        next();
+
+    } catch (error) {
+        console.log(error);
+        next(error);
+    }
+}
+
+module.exports = {auth, userValidation, tokenAuth};
