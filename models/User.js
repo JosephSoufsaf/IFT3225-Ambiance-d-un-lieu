@@ -22,7 +22,10 @@ const UserSchema = new mongoose.Schema({
             type: String,
             unique: true
         }
-    }]
+    }],
+    favoriteLocations: [
+        {location : {type: mongoose.Schema.Types.ObjectId, ref:'location'}}
+    ]
 });
 
 UserSchema.statics.validateUser = async function (email, password) {
