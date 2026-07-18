@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
 import { loginUser } from "../api/client";
+import { UserLoginContext } from "../App";
 
 export default function Connection() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    const {loggedin, setLoggedin} = useContext(UserLoginContext);
+
+    useEffect(() => {
+        console.log('login state change : ', loggedin);
+    }, [loggedin]);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -14,8 +20,10 @@ export default function Connection() {
         try {
 
             const data = await loginUser({ email, password });
-
             console.log('Connexion réussie', data);
+            console.log(data.authToken)
+            localStorage.setItem('loginToken', data.authToken);
+            setLoggedin(true);
 
         } catch (err) {
             setError(err.message);
