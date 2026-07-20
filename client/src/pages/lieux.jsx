@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getLocations, getLocationByName, getPortrait, getQuietHours, getHistory } from '../api/client';
+import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory } from '../api/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './lieux.css';
 
@@ -82,6 +82,7 @@ export default function Lieux() {
                         <h2 className="lieu-card-title">{selected.name}</h2>
                         <p className="lieu-card-detail">Latitude : {selected.latitude}</p>
                         <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
+                        <button className='lieu-btn' onClick={() => {addFavoriteLocation(selected.name)}}>Ajouter favoris</button>
                         {portrait && portrait.semanticPortrait && (
                             <>
                                 <p className="lieu-card-detail">Classification : {portrait.semanticPortrait.noiseClass}</p>

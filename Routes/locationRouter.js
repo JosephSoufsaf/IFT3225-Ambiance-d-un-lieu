@@ -1,3 +1,4 @@
+const { tokenAuth } = require("../middlewares/middleware");
 const Location = require("../models/Location");
 const express = require('express');
 const router = new express.Router();
@@ -43,8 +44,34 @@ router.post('/locations', async (req, res) => {
         await location.save();
         return res.status(201).json({ success: true, data: location });
     } catch (error) {
-        return res.status(400).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
+
+router.post('/userLocations', tokenAuth, async (req,res) => {
+    try {
+        const {locationName, locationCategory} = req.body;
+        const locationObject = await Location.findOne({ name: locationName})
+        console.log('location : ', locationObject._id.toString());
+
+        const alreadySavedLocations = await req.user.savedLocations.some((savedLocation) => {
+            return savedLocation.location.toString() == locationObject._id.toString() &&
+            savedLocation.category == locationCategory
+        });
+        if (alreadySavedLocations) {
+            return res.status(409).json({ success: false, error: "Ce lieu est déjà favori" });
+        }
+        console.log('already saved : ', alreadySavedLocations);
+
+        req.user.savedLocations.push({
+            location: locationObject,
+            category: locationCategory
+        });
+        await req.user.save();
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message })
+    }
+})
 
 module.exports = router;
