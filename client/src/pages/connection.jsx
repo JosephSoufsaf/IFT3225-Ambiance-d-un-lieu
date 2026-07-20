@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
 import { loginUser } from "../api/client";
+import { UserLoginContext } from "../App";
 
 export default function Connection() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    const [message, setMessage] = useState(null);
+    const {loggedin, setLoggedin} = useContext(UserLoginContext);
+
+    useEffect(() => {
+        console.log('login state change : ', loggedin);
+    }, [loggedin]);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -14,11 +21,13 @@ export default function Connection() {
         try {
 
             const data = await loginUser({ email, password });
-
-            console.log('Connexion réussie', data);
-
+            console.log(data.authToken)
+            localStorage.setItem('loginToken', data.authToken);
+            setLoggedin(true);
+            setMessage('Connexion réussie');
         } catch (err) {
-            setError(err.message);
+            setMessage(null);
+            setError('Erreur, login non complété',err.message);
         }
     }
 
@@ -33,6 +42,7 @@ export default function Connection() {
             <button type="submit">Se Connecter</button>
 
             {error && <p>{error}</p>}
+            {message && <p>{message}</p>}
 
         </form>
     );

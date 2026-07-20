@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router"
+import { createContext, useState } from "react";
 import Header from './components/Header.jsx'
 import Lieux from "./pages/lieux.jsx";
 import Map from "./pages/map.jsx";
@@ -7,18 +8,31 @@ import Inscription from "./pages/inscription.jsx";
 import Connection from "./pages/connection.jsx";
 import Home from "./pages/home.jsx"
 
-export default function App() {
-  return <>
-    <Header></Header>
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/lieux" element={<Lieux />} />
-      <Route path="/map" element={<Map />}/>
-      <Route element={<Auth/>}>
-        <Route path="inscription" element={<Inscription />}/>
-        <Route path="connection" element={<Connection/> }/>
-      </Route>
-    </Routes>
+export const UserLoginContext = createContext();
 
+export default function App() {
+  const [loggedin, setLoggedin] = useState(() => {
+  const token = localStorage.getItem('loginToken');
+  if (token == null) {
+      return false;
+    } else {
+      return true;
+    }
+  });
+  console.log('App rendered', 'user logged in : ', loggedin);
+
+  return <>
+    <UserLoginContext.Provider value={{loggedin, setLoggedin}}>
+      <Header></Header>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/lieux" element={<Lieux />} />
+        <Route path="/map" element={<Map />}/>
+        <Route element={<Auth/>}>
+          <Route path="inscription" element={<Inscription />}/>
+          <Route path="connection" element={<Connection/> }/>
+        </Route>
+      </Routes>
+    </UserLoginContext.Provider>
   </>;
 }

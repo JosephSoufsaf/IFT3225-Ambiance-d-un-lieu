@@ -3,7 +3,7 @@ const express = require('express');
 const router = new express.Router();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const { userValidation } = require('../middlewares/middleware')
+const { userValidation, tokenAuth } = require('../middlewares/middleware')
 
 
 
@@ -48,17 +48,11 @@ router.post("/login", userValidation ,async (req, res) => {
     }
 });
 
-router.post("/logout", userValidation ,async (req, res) => {
+router.delete("/logout", tokenAuth, async (req, res) => {
     try {
-        const tokenToRemove = req.authToken;
-        if (!tokenToRemove) {
-          return res.status(400).json({success: false, error: "Token d'authentification manquant"});
-        }
-
-        req.user.authTokens = req.user.authTokens.filter((token) => {
-            return token.authToken !== req.authToken;
-        });
-
+        console.log(req.user, req.authToken);
+        
+        req.user.authTokens = [];
         await req.user.save();
         res.send("Déconnexion effectuée avec succès !");
     } catch (e) {
