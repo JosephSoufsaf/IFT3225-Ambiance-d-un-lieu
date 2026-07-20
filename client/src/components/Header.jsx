@@ -1,32 +1,37 @@
 import { useContext } from "react";
 import { UserLoginContext } from "../App";
 import { logout } from "../api/client";
-
+import './header.css';
 
 export default function Header() {
-    
-    const {loggedin, setLoggedin} = useContext(UserLoginContext);
-    console.log('header login state : ',loggedin);
-    
-    async function handleLogout() {
-        const authToken = localStorage.getItem('loginToken');
-        await logout(authToken);
-        localStorage.removeItem('loginToken');
-        setLoggedin(false);
-    }
-    
-    return <header className="flex justify-between items-center p-4 border-2">
-        <a href="/" className='font-bold text-2xl transition-all hover:scale-110'>Ambiance</a>
+    const { loggedin, setLoggedin } = useContext(UserLoginContext);
 
-        <div>
-            {loggedin ? (
-                <button onClick={handleLogout}>Déconnexion</button>
-            ) : (
-                <div className="flex gap-4">
-                    <a href="/inscription">Inscription</a>
-                    <a href="/connection">Connection</a>
-                </div>
-            )}
-        </div>
-    </header>
+    async function handleLogout() {
+        const token = localStorage.getItem('loginToken');
+        try {
+            await logout(token);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            localStorage.removeItem('loginToken');
+            setLoggedin(false);
+        }
+    }
+
+    return (
+        <header className="app-header">
+            <a href="/" className="app-logo">Ambiance</a>
+
+            <div className="app-nav">
+                {loggedin ? (
+                    <button onClick={handleLogout} className="app-logout-btn">Déconnexion</button>
+                ) : (
+                    <>
+                        <a href="/inscription">Inscription</a>
+                        <a href="/connection">Connection</a>
+                    </>
+                )}
+            </div>
+        </header>
+    );
 }

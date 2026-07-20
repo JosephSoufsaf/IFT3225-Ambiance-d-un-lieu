@@ -1,4 +1,4 @@
-@reference "tailwindcss";
+@import "tailwindcss";
 
 .lieux-page {
     @apply w-full min-h-screen bg-gradient-to-b from-teal-200 via-amber-200 to-teal-200;
@@ -29,7 +29,7 @@
 }
 
 .lieu-btn-active {
-    @apply border-teal-700 bg-teal-700 text-white shadow-md;
+   @apply border-teal-700 bg-teal-700 text-white shadow-md;
 }
 
 .lieu-card {

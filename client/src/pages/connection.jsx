@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from "react";
 import { loginUser } from "../api/client";
 import { UserLoginContext } from "../App";
+import './connection.css';
 
 export default function Connection() {
     const [email, setEmail] = useState('');
@@ -32,17 +33,17 @@ export default function Connection() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className='flex flex-col items-center gap-y-6 m-4'>
+        <form onSubmit={handleSubmit} className='auth-form'>
 
             <h1 className='underline'>Formulaire de connection</h1>
 
-            <input className='inputText' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-            <input className='inputText' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
+            <input className='auth-input' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+            <input className='auth-input' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
             
-            <button type="submit">Se Connecter</button>
+            <button type="submit" className="auth-submit">Se Connecter</button>
 
-            {error && <p>{error}</p>}
-            {message && <p>{message}</p>}
+            {error && <p className="auth-error">{error}</p>}
+            {message && <p className="auth-message">{message}</p>}
 
         </form>
     );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { registerUser } from '../api/client';
+import './connection.css';
 
 export default function Inscription() {
     const [email, setEmail] = useState('');
@@ -19,13 +20,13 @@ export default function Inscription() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className='flex flex-col items-center gap-y-6 m-4'>
+        <form onSubmit={handleSubmit} className='auth-form'>
             <h1 className='underline'>Formulaire d'inscription</h1>
-            <input className='inputText' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-            <input className='inputText' type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nom d'utilisateur" />
-            <input className='inputText' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
-            <button type="submit">S'inscrire</button>
-            {error && <p>{error}</p>}
+            <input className='auth-input' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+            <input className='auth-input' type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nom d'utilisateur" />
+            <input className='auth-input' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
+            <button type="submit" className='auth-submit'>S'inscrire</button>
+            {error && <p className='auth-error'>{error}</p>}
         </form>
     );
 }

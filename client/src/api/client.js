@@ -43,7 +43,8 @@ export async function getLocationByName(name) {
     return data;
 }
 
-    const res = await fetch(`api/ambiance/${encodeURIComponent(locationName)}/portrait`);
+export async function getPortrait(location) {
+    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/portrait`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement du portrait');
@@ -61,15 +62,6 @@ export async function logout(token) {
     console.log(res);
 } 
 
-
-export async function getPortrait(location) {
-    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/portrait`);
-    const data = await res.json();
-    if (!res.ok) {
-        throw new Error(data.error || 'Erreur lors du chargement du portrait');
-    }
-    return data;
-}
 
 export async function getQuietHours(location) {
     const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/quiet-hours`);

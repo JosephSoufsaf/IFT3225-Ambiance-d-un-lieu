@@ -12,14 +12,13 @@ export const UserLoginContext = createContext();
 
 export default function App() {
   const [loggedin, setLoggedin] = useState(() => {
-  const token = localStorage.getItem('loginToken');
-  if (token == null) {
+    const token = localStorage.getItem('loginToken');
+    if (token == null) {
       return false;
     } else {
       return true;
     }
   });
-  console.log('App rendered', 'user logged in : ', loggedin);
 
   return <>
     <UserLoginContext.Provider value={{loggedin, setLoggedin}}>
@@ -27,10 +26,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/lieux" element={<Lieux />} />
-        <Route path="/map" element={<Map />}/>
-        <Route element={<Auth/>}>
-          <Route path="inscription" element={<Inscription />}/>
-          <Route path="connection" element={<Connection/> }/>
+        <Route path="/map" element={<Map />} />
+        <Route element={<Auth />}>
+          <Route path="inscription" element={<Inscription />} />
+          <Route path="connection" element={<Connection />} />
         </Route>
       </Routes>
     </UserLoginContext.Provider>
