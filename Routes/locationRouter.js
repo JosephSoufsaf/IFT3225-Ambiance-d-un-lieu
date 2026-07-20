@@ -48,6 +48,54 @@ router.post('/locations', async (req, res) => {
     }
 });
 
+router.get('/userLocations', tokenAuth, async(req,res) => {
+    try {
+        const {locationName, locationCategory} = req.body;
+        const locationObject = await location.findOne({ name: locationName});
+
+        if (!locationName && !locationCategory) {
+            const allUserLocations = req.user.savedLocations;
+            return res.status(200).json({
+                success: true,
+                message: 'All user locations',
+                data: allUserLocations
+            })
+        }
+        if (!locationName && locationCategory) {
+            const locationsMatchesCategory = req.user.savedLocations.filter(
+                (savedLocation) => savedLocation.category == locationCategory
+            );
+            return res.status(200).json({
+                success: true,
+                message: `All of users saved locations for category : ${locationCategory}`,
+                data: locationsMatchesCategory
+            })
+        }
+
+
+        const userLocation = req.user.savedLocations.find((savedLocation) => {
+            return savedLocation.location.toString() == locationObject._id.toString() &&
+            savedLocation.category == locationCategory
+        });
+        console.log(userLocation);
+
+        if (userLocation == undefined) {
+            return res.status(204).json({ 
+                success: true, 
+                message: 'Location is not in users saved locations'
+            })
+        } else {
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Location is in users saved location', 
+                data: userLocation
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.post('/userLocations', tokenAuth, async (req,res) => {
     try {
         const {locationName, locationCategory} = req.body;

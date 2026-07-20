@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory, removeFavoriteLocation } from '../api/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './lieux.css';
+import { UserLoginContext } from '../App';
 
 export default function Lieux() {
     const [locations, setLocations] = useState([]);
@@ -11,6 +12,8 @@ export default function Lieux() {
     const [portrait, setPortrait] = useState(null);
     const [quietHours, setQuietHours] = useState(null);
     const [history, setHistory] = useState(null);
+
+    const {loggedin, setLoggedin} = useContext(UserLoginContext);
 
     useEffect(() => {
         async function fetchLocations() {
@@ -82,8 +85,12 @@ export default function Lieux() {
                         <h2 className="lieu-card-title">{selected.name}</h2>
                         <p className="lieu-card-detail">Latitude : {selected.latitude}</p>
                         <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
-                        <button className='lieu-btn' onClick={() => {addFavoriteLocation(selected.name)}}>Ajouter favoris</button>
-                        <button className='lieu-btn' onClick={() => {removeFavoriteLocation(selected.name)}}>Enlever favoris</button>
+                        {loggedin &&
+                            <div className='flex gap-2'>
+                                <button className='lieu-btn' onClick={() => {addFavoriteLocation(selected.name)}}>Ajouter favoris</button>
+                                <button className='lieu-btn' onClick={() => {removeFavoriteLocation(selected.name)}}>Enlever favoris</button>
+                            </div>
+                        }
                         {portrait && portrait.semanticPortrait && (
                             <>
                                 <p className="lieu-card-detail">Classification : {portrait.semanticPortrait.noiseClass}</p>
