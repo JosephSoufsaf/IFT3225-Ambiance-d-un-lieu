@@ -43,13 +43,46 @@ export async function getLocationByName(name) {
     return data;
 }
 
-export async function getPortrait(location) {
-    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/portrait`);
-    const data = await res.json();
-    if (!res.ok) {
-        throw new Error(data.error || 'Erreur lors du chargement du portrait');
+export async function addFavoriteLocation(name) {
+
+    console.log(name);
+    const token = localStorage.getItem('loginToken');
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
     }
-    return data;
+
+    const res = await fetch('api/userLocations', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            locationName: name,
+            locationCategory: 'favorite'
+        })
+    });
+    console.log(res);
+}
+
+export async function removeFavoriteLocation(name) {
+    console.log('delete envoye');
+    const token = localStorage.getItem('loginToken');
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
+    const res = await fetch('api/userLocations', {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            locationName: name,
+            locationCategory: 'favorite'
+        })
+    });
+    console.log(res);
 }
 
 export async function logout(token) {
