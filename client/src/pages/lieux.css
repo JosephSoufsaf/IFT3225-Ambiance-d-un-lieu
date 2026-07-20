@@ -1,40 +1,40 @@
 @import 'tailwindcss';
 .lieux-page {
-    @apply flex flex-col items-center gap-6 p-4;
+    @apply flex flex-col items-center gap-8 px-6 py-10 max-w-3xl mx-auto;
 }
 
 .lieux-title {
-    @apply text-2xl underline;
+    @apply text-3xl font-semibold text-gray-800;
 }
 
 .lieux-message {
-    @apply text-gray-500;
+    @apply text-gray-500 italic;
 }
 
 .lieux-error {
-    @apply text-red-600;
+    @apply text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2;
 }
 
 .lieux-list {
-    @apply flex flex-wrap justify-center gap-3;
+    @apply grid grid-cols-2 sm:grid-cols-3 gap-4 w-full;
 }
 
 .lieu-btn {
-    @apply px-4 py-2 rounded-lg border border-gray-300 transition-all hover:bg-gray-100;
+    @apply flex items-center justify-center text-center px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium shadow-sm transition-all duration-200 hover:border-gray-400 hover:shadow-md hover:-translate-y-0.5;
 }
 
 .lieu-btn-active {
-    @apply border-black bg-gray-200;
+    @apply border-gray-800 bg-gray-800 text-white shadow-md;
 }
 
 .lieu-card {
-    @apply w-full max-w-sm border rounded-xl p-4 shadow-sm flex flex-col gap-2;
+    @apply w-full max-w-sm border border-gray-200 rounded-2xl p-6 shadow-md flex flex-col gap-3 bg-white animate-[fadeIn_0.2s_ease];
 }
 
 .lieu-card-title {
-    @apply text-xl font-semibold;
+    @apply text-xl font-semibold text-gray-800 border-b border-gray-100 pb-2;
 }
 
 .lieu-card-detail {
-    @apply text-sm text-gray-600;
+    @apply text-sm text-gray-600 flex justify-between;
 }
