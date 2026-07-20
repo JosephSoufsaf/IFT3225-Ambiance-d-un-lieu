@@ -30,6 +30,7 @@ const UserSchema = new mongoose.Schema({
             required: true
         },
         category : {
+            type: String,
             enum: ['favorite', 'observed'],
             required: true
         }
