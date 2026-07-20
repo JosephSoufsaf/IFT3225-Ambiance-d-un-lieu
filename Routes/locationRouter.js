@@ -72,6 +72,37 @@ router.post('/userLocations', tokenAuth, async (req,res) => {
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message })
     }
-})
+});
+
+router.delete('/userLocations', tokenAuth, async (req,res) => {
+    try {
+        
+        console.log('User favorite locations : ', req.user.savedLocations);
+
+        const {locationName, locationCategory} = req.body;
+        const locationObject = await Location.findOne({ name: locationName});
+
+        const filteredLocations = req.user.savedLocations.filter((savedLocation) => {
+            return savedLocation.location.toString() != locationObject._id.toString() ||
+            savedLocation.category != locationCategory 
+        });
+        console.log('filtered locations : ', filteredLocations);
+
+        if (req.user.savedLocations == filteredLocations) {
+            return res.status(204).json({success: true, message: "Le lieu n'est déja pas dans les favoris"});
+        } else {
+            req.user.savedLocations = filteredLocations;
+        }
+        
+        console.log('new User favorite locations : ',req.user.savedLocations);
+
+        await req.user.save();
+
+        return res.status(200).json({ success: true, data: filteredLocations});
+
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 module.exports = router;
