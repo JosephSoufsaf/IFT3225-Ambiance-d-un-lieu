@@ -43,14 +43,6 @@ export async function getLocationByName(name) {
     return data;
 }
 
-    const res = await fetch(`api/ambiance/${encodeURIComponent(locationName)}/portrait`);
-    const data = await res.json();
-    if (!res.ok) {
-        throw new Error(data.error || 'Erreur lors du chargement du portrait');
-    }
-    return data;
-}
-
 export async function logout(token) {
     const res = await fetch('api/logout', {
         method: 'DELETE',
