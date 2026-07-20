@@ -114,3 +114,17 @@ export async function getHistory(location, last = '3h') {
     }
     return data;
 }
+
+
+export async function getPortrait(location) {
+    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/portrait`);
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors du chargement du portrait');
+    }
+    return data;
+}
+
+
+
+
