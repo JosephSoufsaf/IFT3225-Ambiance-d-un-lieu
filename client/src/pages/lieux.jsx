@@ -39,33 +39,35 @@ export default function Lieux() {
 
     return (
         <div className="lieux-page">
-            <h1 className="lieux-title">Lieux enregistrés</h1>
+            <div className="lieux-content">
+                <h1 className="lieux-title">Lieux enregistrés</h1>
 
-            {loading && <p className="lieux-message">Chargement des lieux...</p>}
-            {error && <p className="lieux-error">{error}</p>}
-            {!loading && !error && locations.length === 0 && (
-                <p className="lieux-message">Aucun lieu enregistré pour le moment.</p>
-            )}
+                {loading && <p className="lieux-message">Chargement des lieux...</p>}
+                {error && <p className="lieux-error">{error}</p>}
+                {!loading && !error && locations.length === 0 && (
+                    <p className="lieux-message">Aucun lieu enregistré pour le moment.</p>
+                )}
 
-            <div className="lieux-list">
-                {locations.map((location) => (
-                    <button
-                        key={location._id}
-                        onClick={() => handleSelect(location.name)}
-                        className={`lieu-btn ${selected?.name === location.name ? 'lieu-btn-active' : ''}`}
-                    >
-                        {location.name}
-                    </button>
-                ))}
-            </div>
-
-            {selected && (
-                <div className="lieu-card">
-                    <h2 className="lieu-card-title">{selected.name}</h2>
-                    <p className="lieu-card-detail">Latitude : {selected.latitude}</p>
-                    <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
+                <div className="lieux-list">
+                    {locations.map((location) => (
+                        <button
+                            key={location._id}
+                            onClick={() => handleSelect(location.name)}
+                            className={`lieu-btn ${selected?.name === location.name ? 'lieu-btn-active' : ''}`}
+                        >
+                            {location.name}
+                        </button>
+                    ))}
                 </div>
-            )}
+
+                {selected && (
+                    <div className="lieu-card">
+                        <h2 className="lieu-card-title">{selected.name}</h2>
+                        <p className="lieu-card-detail">Latitude : {selected.latitude}</p>
+                        <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
