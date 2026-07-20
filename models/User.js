@@ -23,9 +23,17 @@ const UserSchema = new mongoose.Schema({
             unique: true
         }
     }],
-    favoriteLocations: [
-        {location : {type: mongoose.Schema.Types.ObjectId, ref:'location'}}
-    ]
+    savedLocations: [{
+        location : {
+            type: mongoose.Schema.Types.ObjectId, 
+            ref:'location',
+            required: true
+        },
+        category : {
+            enum: ['favorite', 'observed'],
+            required: true
+        }
+    }]
 });
 
 UserSchema.statics.validateUser = async function (email, password) {
