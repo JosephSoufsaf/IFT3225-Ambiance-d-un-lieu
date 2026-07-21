@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory, removeFavoriteLocation } from '../api/client';
+import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory, removeFavoriteLocation, getFavoriteLocations  } from '../api/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './lieux.css';
 import { UserLoginContext } from '../App';
@@ -12,8 +12,15 @@ export default function Lieux() {
     const [portrait, setPortrait] = useState(null);
     const [quietHours, setQuietHours] = useState(null);
     const [history, setHistory] = useState(null);
+    const [activeTab, setActiveTab] = useState('all');
+    const [favorites, setFavorites] = useState([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
+    const [favoritesError, setFavoritesError] = useState(null);
+    const [favoriteMessage, setFavoriteMessage] = useState(null);
 
-    const {loggedin, setLoggedin} = useContext(UserLoginContext);
+
+
+    const { loggedin } = useContext(UserLoginContext);
 
     useEffect(() => {
         async function fetchLocations() {
@@ -28,6 +35,59 @@ export default function Lieux() {
         }
         fetchLocations();
     }, []);
+
+    async function handleAddFavorite() {
+        try {
+            await addFavoriteLocation(selected.name);
+            setFavoriteMessage(true);
+        } catch (err) {
+            console.log(err);
+        }
+        setTimeout(() => setFavoriteMessage(false), 1000);
+    }
+
+    async function handleRemoveFavorite() {
+        try {
+            await removeFavoriteLocation(selected.name);
+            setFavoriteMessage(true);
+            setFavorites((prev) => prev.filter((fav) => fav.location.name !== selected.name));
+            if (activeTab === 'mine') {
+                setSelected(null);
+                setPortrait(null);
+                setQuietHours(null);
+                setHistory(null);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        setTimeout(() => setFavoriteMessage(false), 1000);
+    }
+
+
+    async function handleTabClick(tab) {
+        if (tab === 'mine' && !loggedin) {
+            alert('Connecte-toi pour voir tes lieux favoris et observés.');
+            return;
+        }
+        setActiveTab(tab);
+        setSelected(null);
+        setPortrait(null);
+        setQuietHours(null);
+        setHistory(null);
+
+        if (tab === 'mine') {
+            setFavoritesLoading(true);
+            setFavoritesError(null);
+            try {
+                const res = await getFavoriteLocations();
+                setFavorites(res.data);
+            } catch (err) {
+                setFavoritesError(err.message);
+            } finally {
+                setFavoritesLoading(false);
+            }
+        }
+    }
 
     async function handleSelect(name) {
         if (selected?.name === name) {
@@ -62,24 +122,65 @@ export default function Lieux() {
             <div className="lieux-content">
                 <h1 className="lieux-title">Lieux enregistrés</h1>
 
-                {loading && <p className="lieux-message">Chargement des lieux</p>}
-                {error && <p className="lieux-error">{error}</p>}
-                {!loading && !error && locations.length === 0 && (
-                    <p className="lieux-message">Aucun lieu enregistré pour le moment.</p>
-                )}
-
-                <div className="lieux-list">
-                    {locations.map((location) => (
-                        <button
-                            key={location._id}
-                            onClick={() => handleSelect(location.name)}
-                            className={`lieu-btn ${selected?.name === location.name ? 'lieu-btn-active' : ''}`}
-                        >
-                            {location.name}
-                        </button>
-                    ))}
+                <div className="lieux-tabs">
+                    <button
+                        className={`lieu-btn ${activeTab === 'all' ? 'lieu-btn-active' : ''}`}
+                        onClick={() => handleTabClick('all')}
+                    >
+                        Tous les lieux
+                    </button>
+                    <button
+                        className={`lieu-btn ${activeTab === 'mine' ? 'lieu-btn-active' : ''}`}
+                        onClick={() => handleTabClick('mine')}
+                    >
+                        Mes lieux
+                    </button>
                 </div>
 
+                {activeTab === 'all' && (
+                    <>
+                        {loading && <p className="lieux-message">Chargement des lieux</p>}
+                        {error && <p className="lieux-error">{error}</p>}
+                        {!loading && !error && locations.length === 0 && (
+                            <p className="lieux-message">Aucun lieu enregistré pour le moment.</p>
+                        )}
+                        <div className="lieux-list">
+                            {locations.map((location) => (
+                                <button
+                                    key={location._id}
+                                    onClick={() => handleSelect(location.name)}
+                                    className={`lieu-btn ${selected?.name === location.name ? 'lieu-btn-active' : ''}`}
+                                >
+                                    {location.name}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {activeTab === 'mine' && loggedin && (
+                    <div>
+                        <h2 className="lieux-title" style={{ fontSize: '1.25rem' }}>Mes favoris</h2>
+                        {favoritesLoading && <p className="lieux-message">Chargement...</p>}
+                        {favoritesError && <p className="lieux-error">{favoritesError}</p>}
+                        {!favoritesLoading && !favoritesError && favorites.length === 0 && (
+                            <p className="lieux-message">Aucun lieu favori pour le moment.</p>
+                        )}
+                        <div className="lieux-list">
+                            {favorites.map((fav) => (
+                                <button
+                                    key={fav._id}
+                                    onClick={() => handleSelect(fav.location.name)}
+                                    className={`lieu-btn ${selected?.name === fav.location.name ? 'lieu-btn-active' : ''}`}
+                                >
+                                    {fav.location.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* La card est maintenant EN DEHORS des deux blocs ci-dessus, donc visible peu importe l'onglet actif */}
                 {selected && (
                     <div className="lieu-card">
                         <h2 className="lieu-card-title">{selected.name}</h2>
@@ -87,8 +188,21 @@ export default function Lieux() {
                         <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
                         {loggedin &&
                             <div className='flex gap-2'>
-                                <button className='lieu-btn' onClick={() => {addFavoriteLocation(selected.name)}}>Ajouter favoris</button>
-                                <button className='lieu-btn' onClick={() => {removeFavoriteLocation(selected.name)}}>Enlever favoris</button>
+                                {activeTab === 'mine' ? (
+                                    <button
+                                        className={`lieu-btn ${favoriteMessage ? 'lieu-btn-active' : ''}`}
+                                        onClick={handleRemoveFavorite}
+                                    >
+                                        Enlever favoris
+                                    </button>
+                                ) : (
+                                    <button
+                                        className={`lieu-btn ${favoriteMessage ? 'lieu-btn-active' : ''}`}
+                                        onClick={handleAddFavorite}
+                                    >
+                                        Ajouter favoris
+                                    </button>
+                                )}
                             </div>
                         }
                         {portrait && portrait.semanticPortrait && (

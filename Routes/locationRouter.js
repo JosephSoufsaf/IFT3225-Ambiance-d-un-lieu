@@ -50,8 +50,9 @@ router.post('/locations', async (req, res) => {
 
 router.get('/userLocations', tokenAuth, async(req,res) => {
     try {
-        const {locationName, locationCategory} = req.body;
-        const locationObject = await location.findOne({ name: locationName});
+        const {locationName, locationCategory} = req.query;
+        const locationObject = await Location.findOne({ name: locationName});
+        await req.user.populate('savedLocations.location');
 
         if (!locationName && !locationCategory) {
             const allUserLocations = req.user.savedLocations;
@@ -92,6 +93,7 @@ router.get('/userLocations', tokenAuth, async(req,res) => {
             });
         }
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -116,6 +118,7 @@ router.post('/userLocations', tokenAuth, async (req,res) => {
             category: locationCategory
         });
         await req.user.save();
+        return res.status(201).json({ success: true, data: req.user.savedLocations });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message })

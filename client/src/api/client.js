@@ -125,6 +125,22 @@ export async function getPortrait(location) {
     return data;
 }
 
+export async function getFavoriteLocations() {
+    const token = localStorage.getItem('loginToken');
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
 
+    const res = await fetch(`api/userLocations?locationCategory=favorite`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors du chargement des favoris');
+    }
+    return data;
+}
 
 

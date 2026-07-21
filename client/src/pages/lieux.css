@@ -43,3 +43,7 @@
 .lieu-card-detail {
     @apply text-sm text-amber-700 flex justify-between;
 }
+
+.lieux-tabs {
+    @apply flex gap-3 mb-4;
+}
