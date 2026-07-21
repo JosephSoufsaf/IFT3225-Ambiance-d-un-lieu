@@ -7,6 +7,8 @@ import Auth from "./pages/auth.jsx";
 import Inscription from "./pages/inscription.jsx";
 import Connection from "./pages/connection.jsx";
 import Home from "./pages/home.jsx"
+import NouvelleObservation from "./pages/nouvelleObservation.jsx";
+
 
 export const UserLoginContext = createContext();
 
@@ -27,6 +29,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/lieux" element={<Lieux />} />
         <Route path="/map" element={<Map />} />
+        <Route path="/nouvelleObservation" element={<NouvelleObservation />} />
         <Route element={<Auth />}>
           <Route path="inscription" element={<Inscription />} />
           <Route path="connection" element={<Connection />} />

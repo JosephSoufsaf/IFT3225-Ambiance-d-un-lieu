@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory, removeFavoriteLocation, getFavoriteLocations  } from '../api/client';
+import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory, removeFavoriteLocation, getFavoriteLocations, getObservedLocations } from '../api/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './lieux.css';
 import { UserLoginContext } from '../App';
@@ -17,8 +17,7 @@ export default function Lieux() {
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [favoritesError, setFavoritesError] = useState(null);
     const [favoriteMessage, setFavoriteMessage] = useState(null);
-
-
+    const [observed, setObserved] = useState([]);
 
     const { loggedin } = useContext(UserLoginContext);
 
@@ -63,7 +62,6 @@ export default function Lieux() {
         setTimeout(() => setFavoriteMessage(false), 1000);
     }
 
-
     async function handleTabClick(tab) {
         if (tab === 'mine' && !loggedin) {
             alert('Connecte-toi pour voir tes lieux favoris et observés.');
@@ -79,8 +77,11 @@ export default function Lieux() {
             setFavoritesLoading(true);
             setFavoritesError(null);
             try {
-                const res = await getFavoriteLocations();
-                setFavorites(res.data);
+                const favRes = await getFavoriteLocations();
+                setFavorites(favRes.data);
+
+                const obsRes = await getObservedLocations();
+                setObserved(obsRes.data);
             } catch (err) {
                 setFavoritesError(err.message);
             } finally {
@@ -159,28 +160,47 @@ export default function Lieux() {
                 )}
 
                 {activeTab === 'mine' && loggedin && (
-                    <div>
-                        <h2 className="lieux-title" style={{ fontSize: '1.25rem' }}>Mes favoris</h2>
-                        {favoritesLoading && <p className="lieux-message">Chargement...</p>}
-                        {favoritesError && <p className="lieux-error">{favoritesError}</p>}
-                        {!favoritesLoading && !favoritesError && favorites.length === 0 && (
-                            <p className="lieux-message">Aucun lieu favori pour le moment.</p>
-                        )}
-                        <div className="lieux-list">
-                            {favorites.map((fav) => (
-                                <button
-                                    key={fav._id}
-                                    onClick={() => handleSelect(fav.location.name)}
-                                    className={`lieu-btn ${selected?.name === fav.location.name ? 'lieu-btn-active' : ''}`}
-                                >
-                                    {fav.location.name}
-                                </button>
-                            ))}
+                    <>
+                        <div>
+                            <h2 className="lieux-title" style={{ fontSize: '1.25rem' }}>Mes favoris</h2>
+                            {favoritesLoading && <p className="lieux-message">Chargement...</p>}
+                            {favoritesError && <p className="lieux-error">{favoritesError}</p>}
+                            {!favoritesLoading && !favoritesError && favorites.length === 0 && (
+                                <p className="lieux-message">Aucun lieu favori pour le moment.</p>
+                            )}
+                            <div className="lieux-list">
+                                {favorites.map((fav) => (
+                                    <button
+                                        key={fav._id}
+                                        onClick={() => handleSelect(fav.location.name)}
+                                        className={`lieu-btn ${selected?.name === fav.location.name ? 'lieu-btn-active' : ''}`}
+                                    >
+                                        {fav.location.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <h2 className="lieux-title" style={{ fontSize: '1.25rem' }}>Lieux observés</h2>
+                            {!favoritesLoading && observed.length === 0 && (
+                                <p className="lieux-message">Aucun lieu observé pour le moment.</p>
+                            )}
+                            <div className="lieux-list">
+                                {observed.map((obs) => (
+                                    <button
+                                        key={obs._id}
+                                        onClick={() => handleSelect(obs.location.name)}
+                                        className={`lieu-btn ${selected?.name === obs.location.name ? 'lieu-btn-active' : ''}`}
+                                    >
+                                        {obs.location.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </>
                 )}
 
-                {/* La card est maintenant EN DEHORS des deux blocs ci-dessus, donc visible peu importe l'onglet actif */}
                 {selected && (
                     <div className="lieu-card">
                         <h2 className="lieu-card-title">{selected.name}</h2>

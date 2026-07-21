@@ -24,7 +24,10 @@ export default function Header() {
 
             <div className="app-nav">
                 {loggedin ? (
-                    <button onClick={handleLogout} className="app-logout-btn">Déconnexion</button>
+                    <>
+                        <a href="/nouvelleObservation">Nouvelle observation</a>
+                        <button onClick={handleLogout} className="app-logout-btn">Déconnexion</button>
+                    </>
                 ) : (
                     <>
                         <a href="/inscription">Inscription</a>

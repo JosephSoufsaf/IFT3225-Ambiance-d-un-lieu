@@ -143,4 +143,48 @@ export async function getFavoriteLocations() {
     return data;
 }
 
+export async function submitObservation({ location, proximity, vibe, notes }) {
+    const token = localStorage.getItem('loginToken');
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
 
+    const res = await fetch(`api/observations`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            location,
+            proximity,
+            vibe,
+            notes,
+            timestamp: new Date().toISOString()
+        })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de la soumission de l'observation");
+    }
+    return data;
+}
+
+
+export async function getObservedLocations() {
+    const token = localStorage.getItem('loginToken');
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
+
+    const res = await fetch(`api/userLocations?locationCategory=observed`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors du chargement des lieux observés');
+    }
+    return data;
+}
