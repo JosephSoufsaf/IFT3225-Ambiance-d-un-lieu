@@ -20,7 +20,7 @@ export default function Header() {
 
     return (
         <header className="app-header">
-            <a href="/" className="app-logo">Ambiance</a>
+            <a href="/" className="app-logo">AMBIANCE</a>
 
             <div className="app-nav">
                 {loggedin ? (

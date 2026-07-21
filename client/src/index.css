@@ -11,6 +11,11 @@ button:hover, a:hover {
     cursor: pointer;
 }
 
+.app-header + div {
+    position: relative;
+    padding-top: 4rem;
+}
+
 .inputText {
     border: 1px solid lightgrey;
     padding: 0.25rem 0.5rem ;
