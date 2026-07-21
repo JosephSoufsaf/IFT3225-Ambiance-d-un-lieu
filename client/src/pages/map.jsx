@@ -1,218 +1,170 @@
-import { useEffect, useMemo, useState } from 'react';
-import { getLocations, getPortrait } from '../api/client.js';
+import { useEffect, useState } from 'react';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { getLocations, getPortrait } from '../api/client';
+import './map.css';
 
-// Valeurs placeholder.
-const padding = 8;
-const seuilFreaicheur = 300;
-const couleurDeMood = { calme: '#10b981', modéré: '#f59e0b', animé: '#f43f5e' };
-const couleurGrise = '#9ca3af'; // gris
+// Corrige un bug connu de react-leaflet + bundlers : sans ça, l'icône
+// par défaut des marqueurs Leaflet ne se charge pas (chemins cassés par Vite).
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+});
 
-function isFresh(portrait) {
-    if (!portrait || !portrait.lastMeasurementAt) return false;
-    const ageMs = Date.now() - new Date(portrait.lastMeasurementAt).getTime();
-    return ageMs <= seuilFreaicheur * 60 * 1000;
-}
+// Couleurs + libellés par mood, selon les valeurs réelles retournées par
+// /ambiance/:location/portrait (semanticPortrait.noiseClass), plus
+// 'Unknown' pour le cas où il n'y a pas de mesure récente.
+const MOOD_COLOR = {
+    'Très Calme': '#10b981',
+    'Calme': '#34d399',
+    'Modéré': '#f59e0b',
+    'Bruyant': '#f43f5e',
+    'Unknown': '#9ca3af',
+};
 
-// Convertit une liste de lieux (lat/lng) en positions (%) dans un cadre
-// rectangulaire, en préservant leurs positions relatives les unes aux
-// autres.
-function computePositions(locations) {
-    const valid = locations.filter(
-        (loc) => typeof loc.latitude === 'number' && typeof loc.longitude === 'number'
-    );
-
-    if (valid.length === 0) return {};
-
-    const lats = valid.map((loc) => loc.latitude);
-    const lngs = valid.map((loc) => loc.longitude);
-
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-
-    const latRange = maxLat - minLat || 1;
-    const lngRange = maxLng - minLng || 1;
-    const usable = 100 - padding * 2;
-
-    const positions = {};
-    valid.forEach((loc) => {
-        const xPercent = padding + ((loc.longitude - minLng) / lngRange) * usable;
-        // Axe inversé
-        const yPercent = padding + (1 - (loc.latitude - minLat) / latRange) * usable;
-        positions[loc._id] = { xPercent, yPercent };
-    });
-    return positions;
-}
+const MOOD_LABEL = {
+    'Très Calme': 'Très calme',
+    'Calme': 'Calme',
+    'Modéré': 'Modéré',
+    'Bruyant': 'Bruyant',
+    'Unknown': 'Pas de mesure récente',
+};
 
 export default function Map() {
     const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // portraits[locationId] = { loading, error, data }
+    // portraits[locationName] = { loading, error, data }
     const [portraits, setPortraits] = useState({});
-    const [selectedId, setSelectedId] = useState(null);
 
-    // Charge les lieux
     useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        setError(null);
-
-        getLocations()
-            .then((data) => {
-                if (!cancelled) setLocations(data);
-            })
-            .catch((err) => {
-                if (!cancelled) setError(err.message);
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
-
-        return () => {
-            cancelled = true;
-        };
+        async function fetchLocations() {
+            try {
+                const res = await getLocations();
+                setLocations(res.data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchLocations();
     }, []);
 
-    // Charge chaque lieu pour colorer les nodes marqueurs
     useEffect(() => {
-        locations.forEach((loc) => {
+        async function fetchPortrait(location) {
             setPortraits((prev) => ({
                 ...prev,
-                [loc._id]: { loading: true, error: null, data: prev[loc._id]?.data ?? null },
+                [location.name]: { loading: true, error: null, data: prev[location.name]?.data ?? null },
             }));
 
-            getPortrait(loc.name)
-                .then((data) => {
-                    setPortraits((prev) => ({ ...prev, [loc._id]: { loading: false, error: null, data } }));
-                })
-                .catch((err) => {
-                    setPortraits((prev) => ({
-                        ...prev,
-                        [loc._id]: { loading: false, error: err.message, data: null },
-                    }));
-                });
-        });
+            try {
+                const data = await getPortrait(location.name);
+                setPortraits((prev) => ({ ...prev, [location.name]: { loading: false, error: null, data } }));
+            } catch (err) {
+                setPortraits((prev) => ({
+                    ...prev,
+                    [location.name]: { loading: false, error: err.message, data: null },
+                }));
+            }
+        }
+
+        locations.forEach((location) => fetchPortrait(location));
     }, [locations]);
 
-    // Ajout de Claude lors de la vérification
-    const positions = useMemo(() => computePositions(locations), [locations]);
-    const selected = locations.find((l) => l._id === selectedId);
-    const selectedPortrait = selectedId ? portraits[selectedId] : null;
+    const validLocations = locations.filter(
+        (location) => typeof location.latitude === 'number' && typeof location.longitude === 'number'
+    );
 
-    // XML placeholder par Claude
     return (
-        <div className="flex h-[600px]">
-            <div className="w-64 overflow-y-auto border-2">
-                <p className="p-2">
-                    {loading ? 'Chargement des lieux...' : `${locations.length} lieux`}
-                </p>
+        <div className="map-page">
+            <div className="map-content">
+                <h1 className="map-title">Carte des lieux</h1>
 
-                {error && <p className="p-2">Erreur: {error}</p>}
-
-                {!loading && !error && locations.length === 0 && (
-                    <p className="p-2">Aucun lieu enregistré.</p>
+                {loading && <p className="map-message">Chargement des lieux...</p>}
+                {error && <p className="map-error">{error}</p>}
+                {!loading && !error && validLocations.length === 0 && (
+                    <p className="map-message">Aucun lieu avec coordonnées à afficher.</p>
                 )}
 
-                <ul>
-                    {locations.map((loc) => {
-                        const portraitState = portraits[loc._id];
-                        const fresh = isFresh(portraitState?.data);
-                        const noiseClass = portraitState?.data?.semanticPortrait?.noiseClass;
-                        const color = fresh && noiseClass && couleurDeMood[noiseClass]
-                            ? couleurDeMood[noiseClass]
-                            : couleurGrise;
+                <MapContainer center={[45.517, -73.575]} zoom={12} className="map-container">
+                    <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution="&copy; OpenStreetMap contributors"
+                    />
+
+                    {validLocations.map((location) => {
+                        const portraitState = portraits[location.name];
+                        const data = portraitState?.data;
+                        const isUnknown = !data || data.status === 'Unknown';
+                        const mood = isUnknown ? 'Unknown' : data.semanticPortrait?.noiseClass;
+                        const color = MOOD_COLOR[mood] ?? MOOD_COLOR['Unknown'];
+
+                        const icon = L.divIcon({
+                            className: '',
+                            html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 2px rgba(0,0,0,0.5);"></div>`,
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8],
+                        });
 
                         return (
-                            <li
-                                key={loc._id}
-                                onClick={() => setSelectedId(loc._id)}
-                                className="p-2 border-t-2 cursor-pointer flex items-center gap-2"
-                            >
-                                <span
-                                    style={{
-                                        display: 'inline-block',
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: '50%',
-                                        backgroundColor: color,
-                                    }}
-                                />
-                                {loc.name}
-                            </li>
+                            <Marker key={location._id} position={[location.latitude, location.longitude]} icon={icon}>
+                                <Popup>
+                                    <div className="map-popup">
+                                        <p className="map-popup-title">{location.name}</p>
+
+                                        {portraitState?.loading && (
+                                            <p className="map-popup-detail">Chargement du portrait...</p>
+                                        )}
+                                        {portraitState?.error && (
+                                            <p className="map-popup-detail">
+                                                Portrait indisponible : {portraitState.error}
+                                            </p>
+                                        )}
+
+                                        {data && isUnknown && (
+                                            <p className="map-popup-detail">
+                                                {data.message ?? 'Aucune donnée récente.'}
+                                            </p>
+                                        )}
+
+                                        {data && !isUnknown && (
+                                            <>
+                                                <p className="map-popup-detail">
+                                                    <span>Classe</span>
+                                                    <span>{mood}</span>
+                                                </p>
+                                                <p className="map-popup-detail">
+                                                    <span>Niveau moyen</span>
+                                                    <span>{data.averageSoundDb} dB</span>
+                                                </p>
+                                                <p className="map-popup-detail">
+                                                    <span>Vibe rapportée</span>
+                                                    <span>{data.semanticPortrait?.reportedVibe ?? 'Inconnue'}</span>
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
+                                </Popup>
+                            </Marker>
                         );
                     })}
-                </ul>
-            </div>
+                </MapContainer>
 
-            <div className="flex-1 relative border-2">
-                {Object.entries(positions).map(([locId, pos]) => {
-                    const loc = locations.find((l) => l._id === locId);
-                    if (!loc) return null;
-
-                    const portraitState = portraits[locId];
-                    const fresh = isFresh(portraitState?.data);
-                    const noiseClass = portraitState?.data?.semanticPortrait?.noiseClass;
-                    const color = fresh && noiseClass && CLASS_COLOR[noiseClass]
-                        ? CLASS_COLOR[noiseClass]
-                        : couleurGrise;
-
-                    return (
-                        <button
-                            key={locId}
-                            onClick={() => setSelectedId(locId)}
-                            title={loc.name}
-                            style={{
-                                position: 'absolute',
-                                left: `${pos.xPercent}%`,
-                                top: `${pos.yPercent}%`,
-                                transform: 'translate(-50%, -50%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 4,
-                            }}
-                        >
-                            <span
-                                style={{
-                                    display: 'inline-block',
-                                    width: 14,
-                                    height: 14,
-                                    borderRadius: '50%',
-                                    backgroundColor: color,
-                                    border: '2px solid white',
-                                    boxShadow: '0 0 2px rgba(0,0,0,0.5)',
-                                }}
-                            />
-                            {loc.name}
-                        </button>
-                    );
-                })}
-
-                {selected && (
-                    <div className="absolute bottom-2 left-2 right-2 border-2 bg-white p-2">
-                        <p className="font-bold">{selected.name}</p>
-                        <p>lat: {selected.latitude}, lng: {selected.longitude}</p>
-
-                        {selectedPortrait?.loading && <p>Chargement du portrait...</p>}
-                        {selectedPortrait?.error && (
-                            <p>Portrait indisponible: {selectedPortrait.error}</p>
-                        )}
-
-                        {selectedPortrait?.data && !isFresh(selectedPortrait.data) && (
-                            <p>Aucune mesure récente (moins de {FRESHNESS_MINUTES} min).</p>
-                        )}
-
-                        {selectedPortrait?.data && isFresh(selectedPortrait.data) && (
-                            <div>
-                                <p>Niveau moyen: {selectedPortrait.data.averageSoundDb} dB</p>
-                                <p>Classe: {selectedPortrait.data.semanticPortrait?.noiseClass}</p>
-                                <p>Vibe rapportée: {selectedPortrait.data.semanticPortrait?.reportedVibe}</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                <div className="map-legend">
+                    {Object.entries(MOOD_LABEL).map(([mood, label]) => (
+                        <div key={mood} className="map-legend-item">
+                            <span className="map-legend-dot" style={{ backgroundColor: MOOD_COLOR[mood] }} />
+                            {label}
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
