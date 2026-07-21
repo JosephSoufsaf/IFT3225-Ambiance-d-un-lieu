@@ -121,7 +121,12 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                 success: true,
                 location,
                 message: "Aucune donnée récente.",
-                status: "Unknown"
+                status: "Unknown",
+                semanticPortrait: {
+                    noiseClass: "Inconnue",
+                    humanProximity: lastObservation ? lastObservation.proximity : "Inconnue",
+                    reportedVibe: lastObservation ? lastObservation.vibe : "Inconnue"
+                }
             });
         }
 

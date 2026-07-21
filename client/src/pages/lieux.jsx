@@ -18,6 +18,7 @@ export default function Lieux() {
     const [favoritesError, setFavoritesError] = useState(null);
     const [favoriteMessage, setFavoriteMessage] = useState(null);
     const [observed, setObserved] = useState([]);
+    const [selectedFrom, setSelectedFrom] = useState('all');
 
     const { loggedin } = useContext(UserLoginContext);
 
@@ -90,7 +91,7 @@ export default function Lieux() {
         }
     }
 
-    async function handleSelect(name) {
+    async function handleSelect(name, from = 'all') {
         if (selected?.name === name) {
             setSelected(null);
             setPortrait(null);
@@ -100,6 +101,7 @@ export default function Lieux() {
         }
 
         setError(null);
+        setSelectedFrom(from);
         try {
             const res = await getLocationByName(name);
             setSelected(res.data);
@@ -149,7 +151,7 @@ export default function Lieux() {
                             {locations.map((location) => (
                                 <button
                                     key={location._id}
-                                    onClick={() => handleSelect(location.name)}
+                                    onClick={() => handleSelect(location.name, 'all')}
                                     className={`lieu-btn ${selected?.name === location.name ? 'lieu-btn-active' : ''}`}
                                 >
                                     {location.name}
@@ -172,7 +174,7 @@ export default function Lieux() {
                                 {favorites.map((fav) => (
                                     <button
                                         key={fav._id}
-                                        onClick={() => handleSelect(fav.location.name)}
+                                        onClick={() => handleSelect(fav.location.name, 'favorites')}
                                         className={`lieu-btn ${selected?.name === fav.location.name ? 'lieu-btn-active' : ''}`}
                                     >
                                         {fav.location.name}
@@ -190,7 +192,7 @@ export default function Lieux() {
                                 {observed.map((obs) => (
                                     <button
                                         key={obs._id}
-                                        onClick={() => handleSelect(obs.location.name)}
+                                        onClick={() => handleSelect(obs.location.name, 'observed')}
                                         className={`lieu-btn ${selected?.name === obs.location.name ? 'lieu-btn-active' : ''}`}
                                     >
                                         {obs.location.name}
@@ -208,14 +210,14 @@ export default function Lieux() {
                         <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
                         {loggedin &&
                             <div className='flex gap-2'>
-                                {activeTab === 'mine' ? (
+                                {selectedFrom === 'favorites' ? (
                                     <button
                                         className={`lieu-btn ${favoriteMessage ? 'lieu-btn-active' : ''}`}
                                         onClick={handleRemoveFavorite}
                                     >
                                         Enlever favoris
                                     </button>
-                                ) : (
+                                ) : selectedFrom === 'observed' ? null : (
                                     <button
                                         className={`lieu-btn ${favoriteMessage ? 'lieu-btn-active' : ''}`}
                                         onClick={handleAddFavorite}
