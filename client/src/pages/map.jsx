@@ -7,6 +7,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getLocations, getPortrait } from '../api/client';
 import './map.css';
 
+// Correction apportée par Claude:
 // Corrige un bug connu de react-leaflet + bundlers : sans ça, l'icône
 // par défaut des marqueurs Leaflet ne se charge pas (chemins cassés par Vite).
 delete L.Icon.Default.prototype._getIconUrl;
@@ -16,10 +17,7 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow,
 });
 
-// Couleurs + libellés par mood, selon les valeurs réelles retournées par
-// /ambiance/:location/portrait (semanticPortrait.noiseClass), plus
-// 'Unknown' pour le cas où il n'y a pas de mesure récente.
-const MOOD_COLOR = {
+const moodColor = {
     'Très Calme': '#10b981',
     'Calme': '#34d399',
     'Modéré': '#f59e0b',
@@ -27,7 +25,7 @@ const MOOD_COLOR = {
     'Unknown': '#9ca3af',
 };
 
-const MOOD_LABEL = {
+const moodLabel = {
     'Très Calme': 'Très calme',
     'Calme': 'Calme',
     'Modéré': 'Modéré',
@@ -104,7 +102,7 @@ export default function Map() {
                         const data = portraitState?.data;
                         const isUnknown = !data || data.status === 'Unknown';
                         const mood = isUnknown ? 'Unknown' : data.semanticPortrait?.noiseClass;
-                        const color = MOOD_COLOR[mood] ?? MOOD_COLOR['Unknown'];
+                        const color = moodColor[mood] ?? moodColor['Unknown'];
 
                         const icon = L.divIcon({
                             className: '',
@@ -158,9 +156,9 @@ export default function Map() {
                 </MapContainer>
 
                 <div className="map-legend">
-                    {Object.entries(MOOD_LABEL).map(([mood, label]) => (
+                    {Object.entries(moodLabel).map(([mood, label]) => (
                         <div key={mood} className="map-legend-item">
-                            <span className="map-legend-dot" style={{ backgroundColor: MOOD_COLOR[mood] }} />
+                            <span className="map-legend-dot" style={{ backgroundColor: moodColor[mood] }} />
                             {label}
                         </div>
                     ))}
