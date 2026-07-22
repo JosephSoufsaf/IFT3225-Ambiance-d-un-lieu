@@ -7,12 +7,30 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getLocations, getPortrait } from '../api/client';
 import './map.css';
 
+// Correction apportée par Claude:
+// Corrige un bug connu de react-leaflet + bundlers : sans ça, l'icône
+// par défaut des marqueurs Leaflet ne se charge pas (chemins cassés par Vite).
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
+});
+
 const moodColor = {
     'Très Calme': '#10b981',
     'Calme': '#34d399',
     'Modéré': '#f59e0b',
     'Bruyant': '#f43f5e',
     'Unknown': '#9ca3af',
+};
+
+const moodLabel = {
+    'Très Calme': 'Très calme',
+    'Calme': 'Calme',
+    'Modéré': 'Modéré',
+    'Bruyant': 'Bruyant',
+    'Unknown': 'Pas de mesure récente',
 };
 
 export default function Map() {
@@ -96,28 +114,55 @@ export default function Map() {
                         return (
                             <Marker key={location._id} position={[location.latitude, location.longitude]} icon={icon}>
                                 <Popup>
-                                    <strong>{location.name}</strong>
-                                    <br />
+                                    <div className="map-popup">
+                                        <p className="map-popup-title">{location.name}</p>
 
-                                    {portraitState?.loading && 'Chargement du portrait...'}
-                                    {portraitState?.error && `Portrait indisponible : ${portraitState.error}`}
+                                        {portraitState?.loading && (
+                                            <p className="map-popup-detail">Chargement du portrait...</p>
+                                        )}
+                                        {portraitState?.error && (
+                                            <p className="map-popup-detail">
+                                                Portrait indisponible : {portraitState.error}
+                                            </p>
+                                        )}
 
-                                    {data && isUnknown && (data.message ?? 'Aucune donnée récente.')}
+                                        {data && isUnknown && (
+                                            <p className="map-popup-detail">
+                                                {data.message ?? 'Aucune donnée récente.'}
+                                            </p>
+                                        )}
 
-                                    {data && !isUnknown && (
-                                        <>
-                                            Classe : {mood}
-                                            <br />
-                                            Niveau moyen : {data.averageSoundDb} dB
-                                            <br />
-                                            Vibe rapportée : {data.semanticPortrait?.reportedVibe ?? 'Inconnue'}
-                                        </>
-                                    )}
+                                        {data && !isUnknown && (
+                                            <>
+                                                <p className="map-popup-detail">
+                                                    <span>Classe</span>
+                                                    <span>{mood}</span>
+                                                </p>
+                                                <p className="map-popup-detail">
+                                                    <span>Niveau moyen</span>
+                                                    <span>{data.averageSoundDb} dB</span>
+                                                </p>
+                                                <p className="map-popup-detail">
+                                                    <span>Vibe rapportée</span>
+                                                    <span>{data.semanticPortrait?.reportedVibe ?? 'Inconnue'}</span>
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
                                 </Popup>
                             </Marker>
                         );
                     })}
                 </MapContainer>
+
+                <div className="map-legend">
+                    {Object.entries(moodLabel).map(([mood, label]) => (
+                        <div key={mood} className="map-legend-item">
+                            <span className="map-legend-dot" style={{ backgroundColor: moodColor[mood] }} />
+                            {label}
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
