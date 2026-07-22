@@ -29,7 +29,7 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
             hourlyGroups[hour].count += 1;
         });
 
-        // Calcule la moyenne par heure et trie
+         // Calcule la moyenne par heure et trie
         const hourlyRanking = Object.entries(hourlyGroups)
             .map(([hour, data]) => ({
                 hourSlot24h: parseInt(hour),
@@ -121,7 +121,12 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                 success: true,
                 location,
                 message: "Aucune donnée récente.",
-                status: "Unknown"
+                status: "Unknown",
+                semanticPortrait: {
+                    noiseClass: "Inconnue",
+                    humanProximity: lastObservation ? lastObservation.proximity : "Inconnue",
+                    reportedVibe: lastObservation ? lastObservation.vibe : "Inconnue"
+                }
             });
         }
 

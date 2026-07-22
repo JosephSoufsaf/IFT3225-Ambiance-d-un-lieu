@@ -1,8 +1,9 @@
 const User = require("../models/User");
 const express = require('express');
-const router = new expres.Router();
+const router = new express.Router();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const { userValidation, tokenAuth } = require('../middlewares/middleware')
 
 
 
@@ -32,4 +33,4 @@ router.post('/register', async (req, res) =>{
     
   }
 
-})
+module.exports = router;

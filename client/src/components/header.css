@@ -1,0 +1,30 @@
+@reference "tailwindcss";
+
+.app-header {
+    @apply flex justify-between items-center p-6;
+    border-radius: 0 0 1rem 1rem;
+    background-color: #ffffffbe;
+    position: absolute;
+    width: min( 80vw , 800px );
+    left: 0;
+    right: 0;
+    margin: auto;
+    height: 5rem;
+    z-index: 99;
+}
+
+.app-logo {
+    @apply font-bold text-2xl text-teal-800 bg-transparent transition-all hover:scale-105 hover:bg-transparent no-underline;
+}
+
+.app-nav {
+    @apply flex items-center gap-4;
+}
+
+.app-nav a {
+    @apply text-teal-700 font-medium px-3 py-1.5 rounded-lg bg-white/60 border border-teal-300 transition-all hover:bg-white/90 hover:border-teal-500;
+}
+
+.app-logout-btn {
+    @apply text-white font-medium px-4 py-1.5 rounded-lg bg-amber-600 border border-amber-700 transition-all hover:bg-amber-700;
+}
