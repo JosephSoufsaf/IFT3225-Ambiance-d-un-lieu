@@ -13,6 +13,9 @@ const NOISE_BASELINE = !isNaN(argBaseline) ? argBaseline : 35.0; // defaults to 
 const startOffset = parseInt(process.argv[3]) || 30; // default 30
 const endOffset = parseInt(process.argv[4]) || 0;    // default 0
 
+// Définir localisation à populer => Changer le string demo_location
+const locationName = 'hopital';
+
 async function seedDatabase() {
     try {
         console.log("attaching network socket to MongoDB Atlas...");
@@ -39,7 +42,7 @@ async function seedDatabase() {
 
             // check if it already exists
             const existingMeasurement = await Measurement.findOne({ 
-                location: 'demo_location', 
+                location: locationName, 
                 timestamp: isoUTCString 
             });
 
@@ -51,7 +54,7 @@ async function seedDatabase() {
                     type: 'soundPressureLevel',
                     value: Math.round(soundValue * 100) / 100,
                     unit: 'dB',
-                    location: 'demo_location',
+                    location: locationName,
                     timestamp: isoUTCString,
                     deviceId: targetDevice._id
                 });
@@ -60,7 +63,7 @@ async function seedDatabase() {
 
         const observationTimeUTC = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
         const existingObservation = await Observation.findOne({ 
-            location: 'demo_location', 
+            location: locationName, 
             timestamp: observationTimeUTC 
         });
 
@@ -71,7 +74,7 @@ async function seedDatabase() {
 			if (NOISE_BASELINE < 40) { autoVibe = 'Calme'; }
 
             observationsToInsert.push({
-                location: 'demo_location', 
+                location: locationName, 
                 proximity: 'demo_proximity', 
                 vibe: autoVibe,
                 notes: 'demo_notes',
