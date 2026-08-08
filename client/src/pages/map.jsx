@@ -1,10 +1,12 @@
+// client/src/pages/map.jsx
 import { useEffect, useState } from 'react';
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { getLocations, getPortrait } from '../api/client';
+import { getPortrait } from '../api/client';
+import { useLocations } from '../hooks/useLocations';
 import './map.css';
 
 // Correction apportée par Claude:
@@ -34,26 +36,10 @@ const moodLabel = {
 };
 
 export default function Map() {
-    const [locations, setLocations] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { locations, loading, error } = useLocations();
 
     // portraits[locationName] = { loading, error, data }
     const [portraits, setPortraits] = useState({});
-
-    useEffect(() => {
-        async function fetchLocations() {
-            try {
-                const res = await getLocations();
-                setLocations(res.data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchLocations();
-    }, []);
 
     useEffect(() => {
         async function fetchPortrait(location) {

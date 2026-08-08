@@ -1,32 +1,33 @@
 import { useState } from 'react';
 import { registerUser } from '../api/client';
-import './connection.css';
+import AuthForm from '../components/AuthForm';
 
 export default function Inscription() {
-    const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    const [message, setMessage] = useState(null);
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit({ email, username, password }) {
         setError(null);
         try {
-            const data = await registerUser({ email, username, password });
-            console.log('Inscription réussie', data);
+            await registerUser({ email, username, password });
+            setMessage('Inscription réussie');
         } catch (err) {
             setError(err.message);
         }
     }
 
     return (
-        <form onSubmit={handleSubmit} className='auth-form'>
-            <h1 className='underline'>Formulaire d'inscription</h1>
-            <input className='auth-input' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-            <input className='auth-input' type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nom d'utilisateur" />
-            <input className='auth-input' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
-            <button type="submit" className='auth-submit'>S'inscrire</button>
-            {error && <p className='auth-error'>{error}</p>}
-        </form>
+        <AuthForm
+            title="Formulaire d'inscription"
+            fields={[
+                { name: 'email', type: 'email', placeholder: 'Email' },
+                { name: 'username', type: 'text', placeholder: "Nom d'utilisateur" },
+                { name: 'password', type: 'password', placeholder: 'Mot de passe' },
+            ]}
+            submitLabel="S'inscrire"
+            onSubmit={handleSubmit}
+            error={error}
+            message={message}
+        />
     );
 }

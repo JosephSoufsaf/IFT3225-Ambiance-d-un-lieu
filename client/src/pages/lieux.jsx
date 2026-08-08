@@ -1,17 +1,16 @@
-import { useState, useEffect, useContext } from 'react';
-import { getLocations, getLocationByName, addFavoriteLocation, getPortrait, getQuietHours, getHistory, removeFavoriteLocation, getFavoriteLocations, getObservedLocations } from '../api/client';
+import { useState } from 'react';
+import { addFavoriteLocation, removeFavoriteLocation, getFavoriteLocations, getObservedLocations } from '../api/client';
+import { useLocations } from '../hooks/useLocations';
+import { useLocationDetails } from '../hooks/useLocationDetails';
+import { useAuth } from '../hooks/useAuth';
+import LocationList from '../components/LocationList';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './lieux.css';
-import { UserLoginContext } from '../App';
 
 export default function Lieux() {
-    const [locations, setLocations] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selected, setSelected] = useState(null);
-    const [portrait, setPortrait] = useState(null);
-    const [quietHours, setQuietHours] = useState(null);
-    const [history, setHistory] = useState(null);
+    const { locations, loading, error: locationsError } = useLocations();
+    const [selectedName, setSelectedName] = useState(null);
+    const { selected, portrait, quietHours, history, error: detailsError } = useLocationDetails(selectedName);
     const [activeTab, setActiveTab] = useState('all');
     const [favorites, setFavorites] = useState([]);
     const [favoritesLoading, setFavoritesLoading] = useState(false);
@@ -20,25 +19,20 @@ export default function Lieux() {
     const [observed, setObserved] = useState([]);
     const [selectedFrom, setSelectedFrom] = useState('all');
 
-    const { loggedin } = useContext(UserLoginContext);
+    const { loggedin, token } = useAuth();
 
-    useEffect(() => {
-        async function fetchLocations() {
-            try {
-                const res = await getLocations();
-                setLocations(res.data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
+    function handleSelect(name, from = 'all') {
+        if (selectedName === name) {
+            setSelectedName(null);
+            return;
         }
-        fetchLocations();
-    }, []);
+        setSelectedFrom(from);
+        setSelectedName(name);
+    }
 
     async function handleAddFavorite() {
         try {
-            await addFavoriteLocation(selected.name);
+            await addFavoriteLocation(selected.name, token);
             setFavoriteMessage(true);
         } catch (err) {
             console.log(err);
@@ -48,14 +42,11 @@ export default function Lieux() {
 
     async function handleRemoveFavorite() {
         try {
-            await removeFavoriteLocation(selected.name);
+            await removeFavoriteLocation(selected.name, token);
             setFavoriteMessage(true);
             setFavorites((prev) => prev.filter((fav) => fav.location.name !== selected.name));
             if (activeTab === 'mine') {
-                setSelected(null);
-                setPortrait(null);
-                setQuietHours(null);
-                setHistory(null);
+                setSelectedName(null);
             }
         } catch (err) {
             console.log(err);
@@ -69,54 +60,22 @@ export default function Lieux() {
             return;
         }
         setActiveTab(tab);
-        setSelected(null);
-        setPortrait(null);
-        setQuietHours(null);
-        setHistory(null);
+        setSelectedName(null);
 
         if (tab === 'mine') {
             setFavoritesLoading(true);
             setFavoritesError(null);
             try {
-                const favRes = await getFavoriteLocations();
+                const favRes = await getFavoriteLocations(token);
                 setFavorites(favRes.data);
 
-                const obsRes = await getObservedLocations();
+                const obsRes = await getObservedLocations(token);
                 setObserved(obsRes.data);
             } catch (err) {
                 setFavoritesError(err.message);
             } finally {
                 setFavoritesLoading(false);
             }
-        }
-    }
-
-    async function handleSelect(name, from = 'all') {
-        if (selected?.name === name) {
-            setSelected(null);
-            setPortrait(null);
-            setQuietHours(null);
-            setHistory(null);
-            return;
-        }
-
-        setError(null);
-        setSelectedFrom(from);
-        try {
-            const res = await getLocationByName(name);
-            setSelected(res.data);
-
-            const portraitRes = await getPortrait(name);
-            setPortrait(portraitRes);
-
-            const quietHoursRes = await getQuietHours(name);
-            setQuietHours(quietHoursRes);
-
-            const historyRes = await getHistory(name);
-            setHistory(historyRes);
-
-        } catch (err) {
-            setError(err.message);
         }
     }
 
@@ -143,21 +102,15 @@ export default function Lieux() {
                 {activeTab === 'all' && (
                     <>
                         {loading && <p className="lieux-message">Chargement des lieux</p>}
-                        {error && <p className="lieux-error">{error}</p>}
-                        {!loading && !error && locations.length === 0 && (
+                        {locationsError && <p className="lieux-error">{locationsError}</p>}
+                        {!loading && !locationsError && locations.length === 0 && (
                             <p className="lieux-message">Aucun lieu enregistré pour le moment.</p>
                         )}
-                        <div className="lieux-list">
-                            {locations.map((location) => (
-                                <button
-                                    key={location._id}
-                                    onClick={() => handleSelect(location.name, 'all')}
-                                    className={`lieu-btn ${selected?.name === location.name ? 'lieu-btn-active' : ''}`}
-                                >
-                                    {location.name}
-                                </button>
-                            ))}
-                        </div>
+                        <LocationList
+                            items={locations.map((l) => ({ key: l._id, name: l.name }))}
+                            selectedName={selectedName}
+                            onSelect={(name) => handleSelect(name, 'all')}
+                        />
                     </>
                 )}
 
@@ -170,17 +123,11 @@ export default function Lieux() {
                             {!favoritesLoading && !favoritesError && favorites.length === 0 && (
                                 <p className="lieux-message">Aucun lieu favori pour le moment.</p>
                             )}
-                            <div className="lieux-list">
-                                {favorites.map((fav) => (
-                                    <button
-                                        key={fav._id}
-                                        onClick={() => handleSelect(fav.location.name, 'favorites')}
-                                        className={`lieu-btn ${selected?.name === fav.location.name ? 'lieu-btn-active' : ''}`}
-                                    >
-                                        {fav.location.name}
-                                    </button>
-                                ))}
-                            </div>
+                            <LocationList
+                                items={favorites.map((fav) => ({ key: fav._id, name: fav.location.name }))}
+                                selectedName={selectedName}
+                                onSelect={(name) => handleSelect(name, 'favorites')}
+                            />
                         </div>
 
                         <div style={{ marginTop: '1.5rem' }}>
@@ -188,17 +135,11 @@ export default function Lieux() {
                             {!favoritesLoading && observed.length === 0 && (
                                 <p className="lieux-message">Aucun lieu observé pour le moment.</p>
                             )}
-                            <div className="lieux-list">
-                                {observed.map((obs) => (
-                                    <button
-                                        key={obs._id}
-                                        onClick={() => handleSelect(obs.location.name, 'observed')}
-                                        className={`lieu-btn ${selected?.name === obs.location.name ? 'lieu-btn-active' : ''}`}
-                                    >
-                                        {obs.location.name}
-                                    </button>
-                                ))}
-                            </div>
+                            <LocationList
+                                items={observed.map((obs) => ({ key: obs._id, name: obs.location.name }))}
+                                selectedName={selectedName}
+                                onSelect={(name) => handleSelect(name, 'observed')}
+                            />
                         </div>
                     </>
                 )}
@@ -208,6 +149,7 @@ export default function Lieux() {
                         <h2 className="lieu-card-title">{selected.name}</h2>
                         <p className="lieu-card-detail">Latitude : {selected.latitude}</p>
                         <p className="lieu-card-detail">Longitude : {selected.longitude}</p>
+                        {detailsError && <p className="lieux-error">{detailsError}</p>}
                         {loggedin &&
                             <div className='flex gap-2'>
                                 {selectedFrom === 'favorites' ? (
