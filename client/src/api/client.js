@@ -188,3 +188,23 @@ export async function getObservedLocations() {
     }
     return data;
 }
+
+export async function addNewLocation(locationObject) {
+    const token = localStorage.getItem("loginToken");
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
+    const res = await fetch('api/locations', {
+        method: 'POST',
+        headers: {
+            'Authorization': `bearer ${token}`,
+            'Content-Type' : 'application/json'
+        },
+        body: JSON.stringify(locationObject)
+    });
+    const data = res.json();
+    if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de l'ajout d'une nouvelle localisation")
+    }
+    return data;
+}

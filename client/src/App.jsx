@@ -3,6 +3,7 @@ import { createContext, useState } from "react";
 import Header from './components/Header.jsx'
 import Lieux from "./pages/lieux.jsx";
 import Map from "./pages/map.jsx";
+import AddLocation from "./pages/addLocation.jsx";
 import Auth from "./pages/auth.jsx";
 import Inscription from "./pages/inscription.jsx";
 import Connection from "./pages/connection.jsx";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/lieux" element={<Lieux />} />
         <Route path="/map" element={<Map />} />
+        <Route path="/nouvelleLocalisation" element={<AddLocation />} />
         <Route path="/nouvelleObservation" element={<NouvelleObservation />} />
         <Route element={<Auth />}>
           <Route path="inscription" element={<Inscription />} />

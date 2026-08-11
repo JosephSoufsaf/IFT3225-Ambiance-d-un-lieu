@@ -1,6 +1,11 @@
+import { useContext } from 'react';
 import './home.css';
+import { UserLoginContext } from '../App';
+
 
 export default function Home() {
+    const loggedinState = useContext(UserLoginContext);
+    
     return (
         <div className="home-page">
             <div className="home-content">
@@ -17,6 +22,11 @@ export default function Home() {
                     <div className="home-cta-card">
                         <p>Consulter la liste des lieux enregistrés et apprenez-en plus!</p>
                         <a href="/lieux">Lieux</a>
+                    </div>
+                    <div className="home-cta-card">
+                        <p>Ajoutez une localisation à suivre ou enregitrer!</p>
+                        {loggedinState.loggedin ? <a href="/nouvellelocalisation">Nouvelle localisation</a> 
+                                                : <p className='underline'>Veuillez vous connecter pour ajouter une localisation</p> }
                     </div>
                 </div>
             </div>
