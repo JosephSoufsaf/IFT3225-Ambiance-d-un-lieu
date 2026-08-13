@@ -22,7 +22,7 @@ export async function loginUser({ email, password }) {
         throw new Error(data.error || data.message || 'Erreur lors de la connexion');
     }
     return data;
-} 
+}
 
 
 export async function getLocations() {
@@ -43,10 +43,27 @@ export async function getLocationByName(name) {
     return data;
 }
 
-export async function addFavoriteLocation(name) {
+export async function addNewLocation(locationObject) {
+    const token = localStorage.getItem("loginToken");
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
+    const res = await fetch('api/locations', {
+        method: 'POST',
+        headers: {
+            'Authorization': `bearer ${token}`,
+            'Content-Type' : 'application/json'
+        },
+        body: JSON.stringify(locationObject)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de l'ajout d'une nouvelle localisation")
+    }
+    return data;
+}
 
-    console.log(name);
-    const token = localStorage.getItem('loginToken');
+export async function addFavoriteLocation(name, token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
@@ -62,12 +79,13 @@ export async function addFavoriteLocation(name) {
             locationCategory: 'favorite'
         })
     });
-    console.log(res);
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors de l'ajout aux favoris");
+    }
 }
 
-export async function removeFavoriteLocation(name) {
-    console.log('delete envoye');
-    const token = localStorage.getItem('loginToken');
+export async function removeFavoriteLocation(name, token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
@@ -82,7 +100,10 @@ export async function removeFavoriteLocation(name) {
             locationCategory: 'favorite'
         })
     });
-    console.log(res);
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors du retrait des favoris");
+    }
 }
 
 export async function logout(token) {
@@ -92,8 +113,10 @@ export async function logout(token) {
             'Authorization': `Bearer ${token}`
         },
     });
-    console.log(res);
-} 
+    if (!res.ok) {
+        console.log('Erreur lors de la déconnexion côté serveur');
+    }
+}
 
 
 export async function getQuietHours(location) {
@@ -125,8 +148,7 @@ export async function getPortrait(location) {
     return data;
 }
 
-export async function getFavoriteLocations() {
-    const token = localStorage.getItem('loginToken');
+export async function getFavoriteLocations(token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
@@ -143,8 +165,7 @@ export async function getFavoriteLocations() {
     return data;
 }
 
-export async function submitObservation({ location, proximity, vibe, notes }) {
-    const token = localStorage.getItem('loginToken');
+export async function submitObservation({ location, proximity, vibe, notes }, token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
@@ -171,8 +192,7 @@ export async function submitObservation({ location, proximity, vibe, notes }) {
 }
 
 
-export async function getObservedLocations() {
-    const token = localStorage.getItem('loginToken');
+export async function getObservedLocations(token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
@@ -185,26 +205,6 @@ export async function getObservedLocations() {
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement des lieux observés');
-    }
-    return data;
-}
-
-export async function addNewLocation(locationObject) {
-    const token = localStorage.getItem("loginToken");
-    if (!token) {
-        throw new Error("Utilisateur n'est pas connecté");
-    }
-    const res = await fetch('api/locations', {
-        method: 'POST',
-        headers: {
-            'Authorization': `bearer ${token}`,
-            'Content-Type' : 'application/json'
-        },
-        body: JSON.stringify(locationObject)
-    });
-    const data = res.json();
-    if (!res.ok) {
-        throw new Error(data.error || "Erreur lors de l'ajout d'une nouvelle localisation")
     }
     return data;
 }

@@ -1,11 +1,10 @@
-import { useContext } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import './home.css';
-import { UserLoginContext } from '../App';
 
 
 export default function Home() {
-    const loggedinState = useContext(UserLoginContext);
-    
+    const { loggedin } = useAuth();
+
     return (
         <div className="home-page">
             <div className="home-content">
@@ -25,7 +24,7 @@ export default function Home() {
                     </div>
                     <div className="home-cta-card">
                         <p>Ajoutez une localisation à suivre ou enregitrer!</p>
-                        {loggedinState.loggedin ? <a href="/nouvellelocalisation">Nouvelle localisation</a> 
+                        {loggedin ? <a href="/nouvellelocalisation">Nouvelle localisation</a> 
                                                 : <p className='underline'>Veuillez vous connecter pour ajouter une localisation</p> }
                     </div>
                 </div>

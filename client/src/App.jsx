@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router"
-import { createContext, useState } from "react";
+import { AuthProvider } from './context/AuthContext.jsx';
 import Header from './components/Header.jsx'
 import Lieux from "./pages/lieux.jsx";
 import Map from "./pages/map.jsx";
@@ -10,21 +10,9 @@ import Connection from "./pages/connection.jsx";
 import Home from "./pages/home.jsx"
 import NouvelleObservation from "./pages/nouvelleObservation.jsx";
 
-
-export const UserLoginContext = createContext();
-
 export default function App() {
-  const [loggedin, setLoggedin] = useState(() => {
-    const token = localStorage.getItem('loginToken');
-    if (token == null) {
-      return false;
-    } else {
-      return true;
-    }
-  });
-
   return <>
-    <UserLoginContext.Provider value={{loggedin, setLoggedin}}>
+    <AuthProvider>
       <Header></Header>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -37,6 +25,6 @@ export default function App() {
           <Route path="connection" element={<Connection />} />
         </Route>
       </Routes>
-    </UserLoginContext.Provider>
+    </AuthProvider>
   </>;
 }

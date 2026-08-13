@@ -1,6 +1,6 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { loginUser } from "../api/client";
-import { UserLoginContext } from "../App";
+import { useAuth } from "../hooks/useAuth";
 import './connection.css';
 
 export default function Connection() {
@@ -8,7 +8,7 @@ export default function Connection() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
-    const {loggedin, setLoggedin} = useContext(UserLoginContext);
+    const { loggedin, login } = useAuth();
 
     useEffect(() => {
         console.log('login state change : ', loggedin);
@@ -20,15 +20,12 @@ export default function Connection() {
         setError(null);
 
         try {
-
             const data = await loginUser({ email, password });
-            console.log(data.authToken)
-            localStorage.setItem('loginToken', data.authToken);
-            setLoggedin(true);
+            login(data.authToken);
             setMessage('Connexion réussie');
         } catch (err) {
             setMessage(null);
-            setError('Erreur, login non complété',err.message);
+            setError(err.message);
         }
     }
 
@@ -39,7 +36,7 @@ export default function Connection() {
 
             <input className='auth-input' type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
             <input className='auth-input' type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
-            
+
             <button type="submit" className="auth-submit">Se Connecter</button>
 
             {error && <p className="auth-error">{error}</p>}

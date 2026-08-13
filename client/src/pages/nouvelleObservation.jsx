@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { getLocations, submitObservation } from '../api/client';
+import { submitObservation } from '../api/client';
+import { useLocations } from '../hooks/useLocations';
+import { useAuth } from '../hooks/useAuth';
 import './connection.css';
 
 const PROXIMITY_OPTIONS = ['proche', 'moyen', 'loin'];
 const VIBE_OPTIONS = ['Très Calme', 'Calme', 'Modéré', 'Bruyant'];
 
 export default function NouvelleObservation() {
-    const [locations, setLocations] = useState([]);
+    const { locations, loading, error: locationsError } = useLocations();
+    const { token } = useAuth();
     const [location, setLocation] = useState('');
     const [proximity, setProximity] = useState(PROXIMITY_OPTIONS[0]);
     const [vibe, setVibe] = useState(VIBE_OPTIONS[0]);
@@ -15,26 +18,17 @@ export default function NouvelleObservation() {
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
-        async function fetchLocations() {
-            try {
-                const res = await getLocations();
-                setLocations(res.data);
-                if (res.data.length > 0) {
-                    setLocation(res.data[0].name);
-                }
-            } catch (err) {
-                setError(err.message);
-            }
+        if (locations.length > 0 && !location) {
+            setLocation(locations[0].name);
         }
-        fetchLocations();
-    }, []);
+    }, [locations, location]);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError(null);
         setSuccess(false);
         try {
-            await submitObservation({ location, proximity, vibe, notes });
+            await submitObservation({ location, proximity, vibe, notes }, token);
             setSuccess(true);
             setNotes('');
         } catch (err) {
@@ -46,6 +40,8 @@ export default function NouvelleObservation() {
         <div className="auth-page">
             <form onSubmit={handleSubmit} className="auth-form">
                 <h1>Nouvelle observation</h1>
+
+                {loading && <p className="auth-message">Chargement des lieux...</p>}
 
                 <label className="w-full text-left text-sm text-gray-600">
                     Lieu
@@ -81,7 +77,7 @@ export default function NouvelleObservation() {
 
                 <button type="submit" className="auth-submit">Soumettre</button>
 
-                {error && <p className="auth-error">{error}</p>}
+                {(locationsError || error) && <p className="auth-error">{locationsError || error}</p>}
                 {success && <p className="auth-message">Observation soumise avec succès !</p>}
             </form>
         </div>
