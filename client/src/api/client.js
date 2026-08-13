@@ -43,26 +43,6 @@ export async function getLocationByName(name) {
     return data;
 }
 
-export async function addNewLocation(locationObject) {
-    const token = localStorage.getItem("loginToken");
-    if (!token) {
-        throw new Error("Utilisateur n'est pas connecté");
-    }
-    const res = await fetch('api/locations', {
-        method: 'POST',
-        headers: {
-            'Authorization': `bearer ${token}`,
-            'Content-Type' : 'application/json'
-        },
-        body: JSON.stringify(locationObject)
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        throw new Error(data.error || "Erreur lors de l'ajout d'une nouvelle localisation")
-    }
-    return data;
-}
-
 export async function addFavoriteLocation(name, token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
@@ -205,6 +185,25 @@ export async function getObservedLocations(token) {
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement des lieux observés');
+    }
+    return data;
+}
+
+export async function addNewLocation(locationObject, token) {
+    if (!token) {
+        throw new Error("Utilisateur n'est pas connecté");
+    }
+    const res = await fetch('api/locations', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(locationObject)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || "Erreur lors de l'ajout d'une nouvelle localisation");
     }
     return data;
 }
