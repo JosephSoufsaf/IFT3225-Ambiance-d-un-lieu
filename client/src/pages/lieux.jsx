@@ -3,6 +3,7 @@ import { addFavoriteLocation, removeFavoriteLocation, getFavoriteLocations, getO
 import { useLocations } from '../hooks/useLocations';
 import { useLocationDetails } from '../hooks/useLocationDetails';
 import { useAuth } from '../hooks/useAuth';
+import LocationList from '../components/LocationList';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import './lieux.css';
 
@@ -105,17 +106,11 @@ export default function Lieux() {
                         {!loading && !locationsError && locations.length === 0 && (
                             <p className="lieux-message">Aucun lieu enregistré pour le moment.</p>
                         )}
-                        <div className="lieux-list">
-                            {locations.map((location) => (
-                                <button
-                                    key={location._id}
-                                    onClick={() => handleSelect(location.name, 'all')}
-                                    className={`lieu-btn ${selectedName === location.name ? 'lieu-btn-active' : ''}`}
-                                >
-                                    {location.name}
-                                </button>
-                            ))}
-                        </div>
+                        <LocationList
+                            items={locations.map((l) => ({ key: l._id, name: l.name }))}
+                            selectedName={selectedName}
+                            onSelect={(name) => handleSelect(name, 'all')}
+                        />
                     </>
                 )}
 
@@ -128,17 +123,11 @@ export default function Lieux() {
                             {!favoritesLoading && !favoritesError && favorites.length === 0 && (
                                 <p className="lieux-message">Aucun lieu favori pour le moment.</p>
                             )}
-                            <div className="lieux-list">
-                                {favorites.map((fav) => (
-                                    <button
-                                        key={fav._id}
-                                        onClick={() => handleSelect(fav.location.name, 'favorites')}
-                                        className={`lieu-btn ${selectedName === fav.location.name ? 'lieu-btn-active' : ''}`}
-                                    >
-                                        {fav.location.name}
-                                    </button>
-                                ))}
-                            </div>
+                            <LocationList
+                                items={favorites.map((fav) => ({ key: fav._id, name: fav.location.name }))}
+                                selectedName={selectedName}
+                                onSelect={(name) => handleSelect(name, 'favorites')}
+                            />
                         </div>
 
                         <div style={{ marginTop: '1.5rem' }}>
@@ -146,17 +135,11 @@ export default function Lieux() {
                             {!favoritesLoading && observed.length === 0 && (
                                 <p className="lieux-message">Aucun lieu observé pour le moment.</p>
                             )}
-                            <div className="lieux-list">
-                                {observed.map((obs) => (
-                                    <button
-                                        key={obs._id}
-                                        onClick={() => handleSelect(obs.location.name, 'observed')}
-                                        className={`lieu-btn ${selectedName === obs.location.name ? 'lieu-btn-active' : ''}`}
-                                    >
-                                        {obs.location.name}
-                                    </button>
-                                ))}
-                            </div>
+                            <LocationList
+                                items={observed.map((obs) => ({ key: obs._id, name: obs.location.name }))}
+                                selectedName={selectedName}
+                                onSelect={(name) => handleSelect(name, 'observed')}
+                            />
                         </div>
                     </>
                 )}
