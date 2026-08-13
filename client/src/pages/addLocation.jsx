@@ -34,13 +34,13 @@ export default function AddLocation () {
         console.log(data);
     }
 
-    return <main className='aboslute py-20'>
+    return <main className='min-h-screen aboslute py-20 bg-linear-to-b from-teal-200 via-amber-200 to-teal-200'>
 
         <form onSubmit={handleSubmit} className='flex flex-col items-center gap-8'>
         
             <h1 className='text-center my-5 text-3xl'>Ajouter une nouvelle localisation</h1>
         
-            <div className='h-[75vw] w-[75vw] mx-auto'>
+            <div className='h-[50vh] max-h-[80vw] w-[50vh] max-w-[80vw] mx-auto'>
         
                 <MapContainer
                 center={[45.502760 , -73.615061]} zoom={13} 
