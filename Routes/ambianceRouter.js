@@ -3,6 +3,27 @@ const Observation = require('../models/Observation')
 const express = require('express');
 const router = new express.Router();
 
+const computeRankings = (measurements) => {
+        // Groupe par heure
+        const hourlyGroups = {};
+        measurements.forEach(m => {
+            const hour = new Date(m.timestamp).getHours();
+            if (!hourlyGroups[hour]) {
+                hourlyGroups[hour] = { total: 0, count: 0 };
+            }
+            hourlyGroups[hour].total += m.value;
+            hourlyGroups[hour].count += 1;
+        });
+
+         // Calcule la moyenne par heure et trie
+        return Object.entries(hourlyGroups)
+            .map(([hour, data]) => ({
+                hourSlot24h: parseInt(hour),
+                averageSoundDb: Math.round((data.total / data.count) * 100) / 100,
+                sampleDensity: data.count
+            }))
+            .sort((a, b) => a.averageSoundDb - b.averageSoundDb);
+}
 
 router.get("/ambiance/:location/quiet-hours", async (req, res) => {
     try {
@@ -18,25 +39,7 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
             return res.status(200).json({ success: true, location, hourlyRanking: [] });
         }
 
-        // Groupe par heure
-        const hourlyGroups = {};
-        measurements.forEach(m => {
-            const hour = new Date(m.timestamp).getHours();
-            if (!hourlyGroups[hour]) {
-                hourlyGroups[hour] = { total: 0, count: 0 };
-            }
-            hourlyGroups[hour].total += m.value;
-            hourlyGroups[hour].count += 1;
-        });
-
-         // Calcule la moyenne par heure et trie
-        const hourlyRanking = Object.entries(hourlyGroups)
-            .map(([hour, data]) => ({
-                hourSlot24h: parseInt(hour),
-                averageSoundDb: Math.round((data.total / data.count) * 100) / 100,
-                sampleDensity: data.count
-            }))
-            .sort((a, b) => a.averageSoundDb - b.averageSoundDb);
+        const hourlyRanking = computeRankings(measurements);
 
         return res.status(200).json({ success: true, location, hourlyRanking });
 
@@ -155,4 +158,4 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = {router, computeRankings};
