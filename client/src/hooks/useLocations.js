@@ -1,39 +1,16 @@
-import { useState, useEffect } from 'react';
-import { getLocations } from '../api/client';
+// client/src/hooks/useLocations.js
+import { useEffect } from 'react';
+import { useLocationsStore } from '../stores/useLocationsStore';
 
 export function useLocations() {
-    const [locations, setLocations] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const locations = useLocationsStore((state) => state.locations);
+    const loading = useLocationsStore((state) => state.loading);
+    const error = useLocationsStore((state) => state.error);
+    const fetchLocations = useLocationsStore((state) => state.fetchLocations);
 
     useEffect(() => {
-        let cancelled = false;
-
-        async function fetchLocations() {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await getLocations();
-                if (!cancelled) {
-                    setLocations(res.data);
-                }
-            } catch (err) {
-                if (!cancelled) {
-                    setError(err.message);
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
-        }
-
         fetchLocations();
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    }, [fetchLocations]);
 
     return { locations, loading, error };
 }
