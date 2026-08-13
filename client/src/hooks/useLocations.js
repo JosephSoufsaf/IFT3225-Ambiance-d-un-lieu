@@ -1,4 +1,3 @@
-// client/src/hooks/useLocations.js
 import { useEffect } from 'react';
 import { useLocationsStore } from '../stores/useLocationsStore';
 
