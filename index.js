@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 
 const devicesRouter = require('./Routes/devicesRouter');
-const collectRouter = require('./Routes/collectRouter');
+const { router: collectRouter } = require('./Routes/collectRouter');
 const ambianceRouter = require('./Routes/ambianceRouter');
 const userRouter = require('./Routes/userRouter');
 const locationRouter = require('./Routes/locationRouter');
