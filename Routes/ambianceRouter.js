@@ -48,32 +48,36 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
     }
 });
 
+const calculateTimeOffset = (lastQuery) => {
+    let timeOffset = 3 * 60 * 60 * 1000; // default
+    const match = lastQuery.toString().match(/^(\d+(\.\d+)?)([mhd])$/i); // regex for minutes, hours or days
+    
+    if (match) {
+        const numericValue = parseFloat(match[1]);
+        const timeUnitIndicator = match[3].toLowerCase();
+
+        switch (timeUnitIndicator) {
+            case 'm': // minutes
+                timeOffset = numericValue * 60 * 1000;
+                break;
+            case 'h': // hours
+                timeOffset = numericValue * 60 * 60 * 1000;
+                break;
+            case 'd': // days
+                timeOffset = numericValue * 24 * 60 * 60 * 1000;
+                break;
+        }
+    } else if (!isNaN(lastQuery)) { // default to hours if just a number
+        timeOffset = parseFloat(lastQuery) * 60 * 60 * 1000;
+    }
+    return timeOffset;
+}
+
 router.get("/ambiance/:location/history", async (req, res) => {
     try {
         const { location } = req.params;
         const lastQuery = req.query.last || "3h"; // default to 3h if nothing there
-        let timeOffset = 3 * 60 * 60 * 1000; // default
-		const match = lastQuery.toString().match(/^(\d+(\.\d+)?)([mhd])$/i); // regex for minutes, hours or days
-		
-		if (match) {
-            const numericValue = parseFloat(match[1]);
-            const timeUnitIndicator = match[3].toLowerCase();
-
-            switch (timeUnitIndicator) {
-                case 'm': // minutes
-                    timeOffset = numericValue * 60 * 1000;
-                    break;
-                case 'h': // hours
-                    timeOffset = numericValue * 60 * 60 * 1000;
-                    break;
-                case 'd': // days
-                    timeOffset = numericValue * 24 * 60 * 60 * 1000;
-                    break;
-            }
-        } else if (!isNaN(lastQuery)) { // default to hours if just a number
-            timeOffset = parseFloat(lastQuery) * 60 * 60 * 1000;
-        }
-		
+		const timeOffset = calculateTimeOffset(lastQuery);
 		const startTime = new Date(Date.now() - timeOffset)
 
         const measurements = await Measurement.find({
@@ -104,6 +108,16 @@ router.get("/ambiance/:location/history", async (req, res) => {
     }
 });
 
+const classifyNoise = (average) => {
+
+    let classification = "Modéré";
+    if (average < 30) classification = "Très Calme";
+    else if (average < 40) classification = "Calme";
+    else if (average > 50) classification = "Bruyant";
+
+    return classification;
+}
+
 router.get("/ambiance/:location/portrait", async (req, res) => {
     try {
         const { location } = req.params;
@@ -132,13 +146,9 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                 }
             });
         }
-
         const average = measurements.reduce((sum, m) => sum + m.value, 0) / measurements.length;
 
-        let classification = "Modéré";
-        if (average < 30) classification = "Très Calme";
-        else if (average < 40) classification = "Calme";
-        else if (average > 50) classification = "Bruyant";
+        const classification = classifyNoise(average);
 
         return res.status(200).json({
             success: true,
@@ -158,4 +168,4 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
     }
 });
 
-module.exports = {router, computeRankings};
+module.exports = {router, computeRankings, calculateTimeOffset, classifyNoise};
