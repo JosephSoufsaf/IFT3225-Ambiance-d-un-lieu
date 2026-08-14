@@ -5,6 +5,27 @@ const router = new express.Router();
 const cache = require('../lib/cache');
 const cacheTimer = 45 * 1000
 
+const computeRankings = (measurements) => {
+        // Groupe par heure
+        const hourlyGroups = {};
+        measurements.forEach(m => {
+            const hour = new Date(m.timestamp).getHours();
+            if (!hourlyGroups[hour]) {
+                hourlyGroups[hour] = { total: 0, count: 0 };
+            }
+            hourlyGroups[hour].total += m.value;
+            hourlyGroups[hour].count += 1;
+        });
+
+         // Calcule la moyenne par heure et trie
+        return Object.entries(hourlyGroups)
+            .map(([hour, data]) => ({
+                hourSlot24h: parseInt(hour),
+                averageSoundDb: Math.round((data.total / data.count) * 100) / 100,
+                sampleDensity: data.count
+            }))
+            .sort((a, b) => a.averageSoundDb - b.averageSoundDb);
+}
 
 router.get("/ambiance/:location/quiet-hours", async (req, res) => {
     try {
@@ -20,25 +41,7 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
             return res.status(200).json({ success: true, location, hourlyRanking: [] });
         }
 
-        // Groupe par heure
-        const hourlyGroups = {};
-        measurements.forEach(m => {
-            const hour = new Date(m.timestamp).getHours();
-            if (!hourlyGroups[hour]) {
-                hourlyGroups[hour] = { total: 0, count: 0 };
-            }
-            hourlyGroups[hour].total += m.value;
-            hourlyGroups[hour].count += 1;
-        });
-
-         // Calcule la moyenne par heure et trie
-        const hourlyRanking = Object.entries(hourlyGroups)
-            .map(([hour, data]) => ({
-                hourSlot24h: parseInt(hour),
-                averageSoundDb: Math.round((data.total / data.count) * 100) / 100,
-                sampleDensity: data.count
-            }))
-            .sort((a, b) => a.averageSoundDb - b.averageSoundDb);
+        const hourlyRanking = computeRankings(measurements);
 
         return res.status(200).json({ success: true, location, hourlyRanking });
 
@@ -47,32 +50,36 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
     }
 });
 
+const calculateTimeOffset = (lastQuery) => {
+    let timeOffset = 3 * 60 * 60 * 1000; // default
+    const match = lastQuery.toString().match(/^(\d+(\.\d+)?)([mhd])$/i); // regex for minutes, hours or days
+    
+    if (match) {
+        const numericValue = parseFloat(match[1]);
+        const timeUnitIndicator = match[3].toLowerCase();
+
+        switch (timeUnitIndicator) {
+            case 'm': // minutes
+                timeOffset = numericValue * 60 * 1000;
+                break;
+            case 'h': // hours
+                timeOffset = numericValue * 60 * 60 * 1000;
+                break;
+            case 'd': // days
+                timeOffset = numericValue * 24 * 60 * 60 * 1000;
+                break;
+        }
+    } else if (!isNaN(lastQuery)) { // default to hours if just a number
+        timeOffset = parseFloat(lastQuery) * 60 * 60 * 1000;
+    }
+    return timeOffset;
+}
+
 router.get("/ambiance/:location/history", async (req, res) => {
     try {
         const { location } = req.params;
         const lastQuery = req.query.last || "3h"; // default to 3h if nothing there
-        let timeOffset = 3 * 60 * 60 * 1000; // default
-		const match = lastQuery.toString().match(/^(\d+(\.\d+)?)([mhd])$/i); // regex for minutes, hours or days
-		
-		if (match) {
-            const numericValue = parseFloat(match[1]);
-            const timeUnitIndicator = match[3].toLowerCase();
-
-            switch (timeUnitIndicator) {
-                case 'm': // minutes
-                    timeOffset = numericValue * 60 * 1000;
-                    break;
-                case 'h': // hours
-                    timeOffset = numericValue * 60 * 60 * 1000;
-                    break;
-                case 'd': // days
-                    timeOffset = numericValue * 24 * 60 * 60 * 1000;
-                    break;
-            }
-        } else if (!isNaN(lastQuery)) { // default to hours if just a number
-            timeOffset = parseFloat(lastQuery) * 60 * 60 * 1000;
-        }
-		
+		const timeOffset = calculateTimeOffset(lastQuery);
 		const startTime = new Date(Date.now() - timeOffset)
 
         const measurements = await Measurement.find({
@@ -102,6 +109,16 @@ router.get("/ambiance/:location/history", async (req, res) => {
         return res.status(500).json({ success: false, error: error.message });
     }
 });
+
+const classifyNoise = (average) => {
+
+    let classification = "Modéré";
+    if (average < 30) classification = "Très Calme";
+    else if (average < 40) classification = "Calme";
+    else if (average > 50) classification = "Bruyant";
+
+    return classification;
+}
 
 router.get("/ambiance/:location/portrait", async (req, res) => {
     try {
@@ -140,13 +157,9 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
             cache.set(cacheKey, payload, cacheTimer);
             return res.status(200).json(payload);
         }
-
         const average = measurements.reduce((sum, m) => sum + m.value, 0) / measurements.length;
 
-        let classification = "Modéré";
-        if (average < 30) classification = "Très Calme";
-        else if (average < 40) classification = "Calme";
-        else if (average > 50) classification = "Bruyant";
+        const classification = classifyNoise(average);
 
         // Même refactor par Claude qu'à la ligne 128
         const payload = {
@@ -170,4 +183,4 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = {router, computeRankings, calculateTimeOffset, classifyNoise};

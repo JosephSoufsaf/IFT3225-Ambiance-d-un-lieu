@@ -24,6 +24,15 @@ router.post("/measurements", auth, async (req, res) => {
     }
 });
 
+// Logique pour ajout lieu à l'utilisateur lors d'ajout d'observation
+const shouldAddLocation = (savedLocations, locationId) => {
+    const alreadyObserved = savedLocations.some((saved) =>
+        saved.location.toString() === locationId.toString() &&
+        saved.category === 'observed'
+    );
+    return !alreadyObserved;
+}
+
 router.post("/observations", tokenAuth, async (req, res) => {
     try {
         const { location, proximity, vibe, notes, timestamp } = req.body;
@@ -45,15 +54,9 @@ router.post("/observations", tokenAuth, async (req, res) => {
         cache.invalidate('portrait:${location}');
         const locationObject = await Location.findOne({ name: location });
 
-        if (locationObject) {
-            const alreadyObserved = req.user.savedLocations.some((saved) =>
-                saved.location.toString() === locationObject._id.toString() &&
-                saved.category === 'observed'
-            );
-            if (!alreadyObserved) {
-                req.user.savedLocations.push({ location: locationObject, category: 'observed' });
-                await req.user.save();
-            }
+        if (locationObject && shouldAddLocation(req.user.savedLocations, locationObject._id)) {
+            req.user.savedLocations.push({ location: locationObject, category: 'observed' });
+            await req.user.save();
         }
         
         return res.status(201).json({ success: true, data: manualLog });
@@ -62,4 +65,4 @@ router.post("/observations", tokenAuth, async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = {router, shouldAddLocation}; 

@@ -1,20 +1,17 @@
-import { useContext } from "react";
-import { UserLoginContext } from "../App";
-import { logout } from "../api/client";
+import { useAuth } from "../hooks/useAuth";
+import { logout as logoutApi } from "../api/client";
 import './header.css';
 
 export default function Header() {
-    const { loggedin, setLoggedin } = useContext(UserLoginContext);
+    const { loggedin, token, logout } = useAuth();
 
     async function handleLogout() {
-        const token = localStorage.getItem('loginToken');
         try {
-            await logout(token);
+            await logoutApi(token);
         } catch (err) {
             console.log(err);
         } finally {
-            localStorage.removeItem('loginToken');
-            setLoggedin(false);
+            logout();
         }
     }
 

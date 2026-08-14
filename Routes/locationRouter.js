@@ -27,6 +27,7 @@ router.get('/locations/:name', async (req, res) => {
 });
 
 
+
 router.post('/locations', async (req, res) => {
     try {
         const { name, latitude, longitude } = req.body;
@@ -48,55 +49,88 @@ router.post('/locations', async (req, res) => {
     }
 });
 
-router.get('/userLocations', tokenAuth, async(req,res) => {
-    try {
-        const {locationName, locationCategory} = req.query;
-        const locationObject = await Location.findOne({ name: locationName});
-        await req.user.populate('savedLocations.location');
+const findUserLocations = (locationName, locationCategory, locationId, userLocations) => {
+  if (locationName && locationCategory) {
+    const location = userLocations.find(
+      (savedLocation) =>
+        savedLocation.location.toString() === locationId.toString() &&
+        savedLocation.category === locationCategory
+    );
+    return {
+      data: location,
+      message: location
+        ? 'Location is in users saved location'
+        : 'Location is not in users saved locations'
+    };
+  }
 
-        if (!locationName && !locationCategory) {
-            const allUserLocations = req.user.savedLocations;
-            return res.status(200).json({
-                success: true,
-                message: 'All user locations',
-                data: allUserLocations
-            })
-        }
-        if (!locationName && locationCategory) {
-            const locationsMatchesCategory = req.user.savedLocations.filter(
-                (savedLocation) => savedLocation.category == locationCategory
-            );
-            return res.status(200).json({
-                success: true,
-                message: `All of users saved locations for category : ${locationCategory}`,
-                data: locationsMatchesCategory
-            })
-        }
+  if (locationName && !locationCategory) {
+    const location = userLocations.find(
+      (savedLocation) => savedLocation.location.toString() === locationId.toString()
+    );
+    return {
+      data: location,
+      message: location
+        ? 'Location is in users saved locations'
+        : 'Location is not in users saved locations'
+    };
+  }
 
+  if (!locationName && locationCategory) {
+    const locations = userLocations.filter(
+      (savedLocation) => savedLocation.category === locationCategory
+    );
+    return {
+      data: locations,
+      message: `All of users saved locations for category : ${locationCategory}`
+    };
+  }
 
-        const userLocation = req.user.savedLocations.find((savedLocation) => {
-            return savedLocation.location.toString() == locationObject._id.toString() &&
-            savedLocation.category == locationCategory
-        });
-        console.log(userLocation);
+  // ni nom ni catégorie
+  return {
+    data: userLocations,
+    message: 'All user locations'
+  };
+};
 
-        if (userLocation == undefined) {
-            return res.status(204).json({ 
-                success: true, 
-                message: 'Location is not in users saved locations'
-            })
-        } else {
-            return res.status(200).json({ 
-                success: true, 
-                message: 'Location is in users saved location', 
-                data: userLocation
-            });
-        }
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ success: false, error: error.message });
+router.get('/userLocations', tokenAuth, async (req, res) => {
+  try {
+    const { locationName, locationCategory } = req.query;
+    await req.user.populate('savedLocations.location');
+
+    let locationId;
+    if (locationName) {
+      const locationObject = await Location.findOne({ name: locationName });
+      if (!locationObject) {
+        return res.status(404).json({ success: false, error: "Ce lieu n'existe pas" });
+      }
+      locationId = locationObject._id;
     }
+
+    const { data, message } = findUserLocations(
+      locationName,
+      locationCategory,
+      locationId,
+      req.user.savedLocations
+    );
+
+    if (locationName && data === undefined) {
+      return res.status(204).json({ success: true, message });
+    }
+
+    return res.status(200).json({ success: true, message, data });
+
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 });
+
+const isAlreadySaved = (userLocations, locationId, locationCategory) => {
+    return userLocations.some((savedLocation) =>
+        savedLocation.location.toString() == locationId &&
+        savedLocation.category == locationCategory
+    )
+}
 
 router.post('/userLocations', tokenAuth, async (req,res) => {
     try {
@@ -104,14 +138,10 @@ router.post('/userLocations', tokenAuth, async (req,res) => {
         const locationObject = await Location.findOne({ name: locationName})
         console.log('location : ', locationObject._id.toString());
 
-        const alreadySavedLocations = await req.user.savedLocations.some((savedLocation) => {
-            return savedLocation.location.toString() == locationObject._id.toString() &&
-            savedLocation.category == locationCategory
-        });
-        if (alreadySavedLocations) {
+        if ( isAlreadySaved(req.user.savedLocations, locationObject._id.toString(), locationCategory) ) {
+
             return res.status(409).json({ success: false, error: "Ce lieu est déjà favori" });
         }
-        console.log('already saved : ', alreadySavedLocations);
 
         req.user.savedLocations.push({
             location: locationObject,
@@ -125,27 +155,36 @@ router.post('/userLocations', tokenAuth, async (req,res) => {
     }
 });
 
+// Retourne les lieux qui ne match PAS le id et catégorie
+const filterOutLocations = (savedLocations, locationId, locationCategory) => {
+
+    return savedLocations.filter((savedLocation) =>
+        // Garder dans la liste filtree si un des deux ne match pas
+        savedLocation.location.toString() != locationId ||
+        savedLocation.category != locationCategory
+    )
+}
+
 router.delete('/userLocations', tokenAuth, async (req,res) => {
     try {
         
-        console.log('User favorite locations : ', req.user.savedLocations);
+        console.log('User saved locations : ', req.user.savedLocations);
 
         const {locationName, locationCategory} = req.body;
         const locationObject = await Location.findOne({ name: locationName});
+        console.log('location object : ' + locationObject);
+        let userLocations = req.user.savedLocations;
 
-        const filteredLocations = req.user.savedLocations.filter((savedLocation) => {
-            return savedLocation.location.toString() != locationObject._id.toString() ||
-            savedLocation.category != locationCategory 
-        });
+        const filteredLocations = filterOutLocations(userLocations, locationObject._id.toString(), locationCategory);
         console.log('filtered locations : ', filteredLocations);
 
-        if (req.user.savedLocations == filteredLocations) {
+        if (userLocations == filteredLocations) {
             return res.status(204).json({success: true, message: "Le lieu n'est déja pas dans les favoris"});
         } else {
             req.user.savedLocations = filteredLocations;
         }
         
-        console.log('new User favorite locations : ',req.user.savedLocations);
+        console.log('new User favorite locations : ',userLocations);
 
         await req.user.save();
 
@@ -156,4 +195,4 @@ router.delete('/userLocations', tokenAuth, async (req,res) => {
     }
 });
 
-module.exports = router;
+module.exports = { router, findUserLocations, isAlreadySaved, filterOutLocations };

@@ -3,9 +3,16 @@ const express = require('express');
 const router = new express.Router();
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const { userValidation, tokenAuth } = require('../middlewares/middleware')
+const { userValidation, tokenAuth } = require('../middlewares/middleware');
+const { validate } = require("../models/Measurement");
 
-
+const validateRegistration = ( username, email, password ) => {
+  const missing = [];
+  if (!username) missing.push('username');
+  if (!email) missing.push('email');
+  if (!password) missing.push('password');
+  return missing;
+};
 
 router.post('/register', async (req, res) =>{
   try{
@@ -13,8 +20,9 @@ router.post('/register', async (req, res) =>{
     const email = req.body.email;
     const username = req.body.username;
 
-    if (!username || !email || !password){
-      return res.status(400).json({ success: false, error: "Champ requis manquant" });
+    const champsManquants = validateRegistration(username, email, password);
+    if (champsManquants.length > 0){
+      return res.status(400).json({ success: false, error: `Champ requis manquant : ${champsManquants}` });
     }
     
     const emailTaken = await User.exists({email});
@@ -60,14 +68,17 @@ router.delete("/logout", tokenAuth, async (req, res) => {
     }
 });
 
+const ownsAccount = (accountDeleteId, reqAccountId) => {
+    return (accountDeleteId == reqAccountId);
+}
+
 router.delete("/account/:id", userValidation, async (req, res) => {
     try {
 
         //url id has to be the one of the user now and not another user's
-         if (req.params.id !== req.user._id.toString()) {
+        if ( !ownsAccount( req.params.id, req.user._id.toString() ) ) {
             return res.status(403).json({ success: false, error: "Vous ne pouvez supprimer que votre propre compte" });
         }
-
         const user = await User.findByIdAndDelete(req.params.id);
         // Trouver propriété _id dans le document de l'utilisateur
 
@@ -82,4 +93,4 @@ router.delete("/account/:id", userValidation, async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = {router, validateRegistration, ownsAccount};
