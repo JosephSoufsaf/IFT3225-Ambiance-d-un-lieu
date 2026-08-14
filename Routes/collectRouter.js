@@ -3,7 +3,6 @@ const Observation = require('../models/Observation')
 const express = require('express');
 const router = new express.Router();
 const Location = require('../models/Location');
-const cache = require('../lib/cache');
 
 const { auth, tokenAuth } = require('../middlewares/middleware');
 
@@ -51,7 +50,7 @@ router.post("/observations", tokenAuth, async (req, res) => {
         });
 
         await manualLog.save();
-        cache.invalidate('portrait:${location}');
+        
         const locationObject = await Location.findOne({ name: location });
 
         if (locationObject && shouldAddLocation(req.user.savedLocations, locationObject._id)) {

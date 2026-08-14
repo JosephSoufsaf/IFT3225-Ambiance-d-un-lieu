@@ -2,8 +2,6 @@ const Measurement = require("../models/Measurement");
 const Observation = require('../models/Observation')
 const express = require('express');
 const router = new express.Router();
-const cache = require('../lib/cache');
-const cacheTimer = 45 * 1000
 
 const computeRankings = (measurements) => {
         // Groupe par heure
@@ -123,12 +121,6 @@ const classifyNoise = (average) => {
 router.get("/ambiance/:location/portrait", async (req, res) => {
     try {
         const { location } = req.params;
-        const cacheKey = 'portrait:${location}';
-
-        const cached = cache.get(cacheKey);
-        if (cached) {
-            return res.status(200).json({ ...cached, fromCache: true });
-        }
 
         const cutoffTime = new Date(Date.now() - 30 * 60 * 1000);
 
@@ -142,8 +134,7 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
             .sort({ timestamp: -1 });
 
         if (measurements.length === 0) {
-            // Refactored par Claude
-            const payload = {
+            return res.status(200).json({
                 success: true,
                 location,
                 message: "Aucune donnée récente.",
@@ -153,16 +144,13 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                     humanProximity: lastObservation ? lastObservation.proximity : "Inconnue",
                     reportedVibe: lastObservation ? lastObservation.vibe : "Inconnue"
                 }
-            };
-            cache.set(cacheKey, payload, cacheTimer);
-            return res.status(200).json(payload);
+            });
         }
         const average = measurements.reduce((sum, m) => sum + m.value, 0) / measurements.length;
 
         const classification = classifyNoise(average);
 
-        // Même refactor par Claude qu'à la ligne 128
-        const payload = {
+        return res.status(200).json({
             success: true,
             location,
             generatedAt: new Date().toISOString(),
@@ -173,10 +161,7 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                 humanProximity: lastObservation ? lastObservation.proximity : "Inconnue",
                 reportedVibe: lastObservation ? lastObservation.vibe : "Inconnue"
             }
-        };
-
-        cache.set(cacheKey, payload, PORTRAIT_CACHE_TTL_MS);
-        return res.status(200).json(payload);
+        });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
