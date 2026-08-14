@@ -9,7 +9,7 @@ const devicesRouter = require('./Routes/devicesRouter');
 const { router: collectRouter } = require('./Routes/collectRouter');
 const { router: ambianceRouter } = require('./Routes/ambianceRouter');
 const userRouter = require('./Routes/userRouter');
-const locationRouter = require('./Routes/locationRouter');
+const {router : locationRouter} = require('./Routes/locationRouter');
 
 const app = express();
 app.use(express.json());
