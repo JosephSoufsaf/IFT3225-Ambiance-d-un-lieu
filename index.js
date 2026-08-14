@@ -6,10 +6,10 @@ const mongoose = require('mongoose');
 const path = require('path');
 
 const devicesRouter = require('./Routes/devicesRouter');
-const collectRouter = require('./Routes/collectRouter');
-const ambianceRouter = require('./Routes/ambianceRouter');
-const userRouter = require('./Routes/userRouter');
-const locationRouter = require('./Routes/locationRouter');
+const { router: collectRouter } = require('./Routes/collectRouter');
+const { router: ambianceRouter } = require('./Routes/ambianceRouter');
+const { router: userRouter } = require('./Routes/userRouter');
+const { router : locationRouter} = require('./Routes/locationRouter');
 
 const app = express();
 app.use(express.json());
