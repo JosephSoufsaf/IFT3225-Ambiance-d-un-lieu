@@ -1,3 +1,7 @@
+import * as cache from './cacheFrontend.js';
+
+const cacheTimer = 45 * 1000;
+
 export async function registerUser({ email, username, password }) {
     const res = await fetch(`api/register`, {
         method: 'POST',
@@ -120,11 +124,20 @@ export async function getHistory(location, last = '3h') {
 
 
 export async function getPortrait(location) {
+    const cacheKey = `portrait:${location}`;
+
+    const cached = cache.get(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
     const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/portrait`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement du portrait');
     }
+
+    cache.set(cacheKey, data, cacheTimer);
     return data;
 }
 
@@ -168,6 +181,8 @@ export async function submitObservation({ location, proximity, vibe, notes }, to
     if (!res.ok) {
         throw new Error(data.error || "Erreur lors de la soumission de l'observation");
     }
+
+    cache.invalidate(`portrait:${location}`);
     return data;
 }
 
