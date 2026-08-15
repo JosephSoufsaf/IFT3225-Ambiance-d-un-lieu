@@ -2,27 +2,29 @@ const Measurement = require("../models/Measurement");
 const Observation = require('../models/Observation')
 const express = require('express');
 const router = new express.Router();
+const cache = require('../lib/cache');
+const cacheTimer = 45 * 1000
 
 const computeRankings = (measurements) => {
-        // Groupe par heure
-        const hourlyGroups = {};
-        measurements.forEach(m => {
-            const hour = new Date(m.timestamp).getHours();
-            if (!hourlyGroups[hour]) {
-                hourlyGroups[hour] = { total: 0, count: 0 };
-            }
-            hourlyGroups[hour].total += m.value;
-            hourlyGroups[hour].count += 1;
-        });
+    // Groupe par heure
+    const hourlyGroups = {};
+    measurements.forEach(m => {
+        const hour = new Date(m.timestamp).getHours();
+        if (!hourlyGroups[hour]) {
+            hourlyGroups[hour] = { total: 0, count: 0 };
+        }
+        hourlyGroups[hour].total += m.value;
+        hourlyGroups[hour].count += 1;
+    });
 
-         // Calcule la moyenne par heure et trie
-        return Object.entries(hourlyGroups)
-            .map(([hour, data]) => ({
-                hourSlot24h: parseInt(hour),
-                averageSoundDb: Math.round((data.total / data.count) * 100) / 100,
-                sampleDensity: data.count
-            }))
-            .sort((a, b) => a.averageSoundDb - b.averageSoundDb);
+    // Calcule la moyenne par heure et trie
+    return Object.entries(hourlyGroups)
+        .map(([hour, data]) => ({
+            hourSlot24h: parseInt(hour),
+            averageSoundDb: Math.round((data.total / data.count) * 100) / 100,
+            sampleDensity: data.count
+        }))
+        .sort((a, b) => a.averageSoundDb - b.averageSoundDb);
 }
 
 router.get("/ambiance/:location/quiet-hours", async (req, res) => {
@@ -30,9 +32,9 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
         const { location } = req.params;
 
         // Récupère toutes les mesures du lieu
-        const measurements = await Measurement.find({ 
-            location, 
-            type: "soundPressureLevel" 
+        const measurements = await Measurement.find({
+            location,
+            type: "soundPressureLevel"
         });
 
         if (measurements.length === 0) {
@@ -51,7 +53,7 @@ router.get("/ambiance/:location/quiet-hours", async (req, res) => {
 const calculateTimeOffset = (lastQuery) => {
     let timeOffset = 3 * 60 * 60 * 1000; // default
     const match = lastQuery.toString().match(/^(\d+(\.\d+)?)([mhd])$/i); // regex for minutes, hours or days
-    
+
     if (match) {
         const numericValue = parseFloat(match[1]);
         const timeUnitIndicator = match[3].toLowerCase();
@@ -77,15 +79,15 @@ router.get("/ambiance/:location/history", async (req, res) => {
     try {
         const { location } = req.params;
         const lastQuery = req.query.last || "3h"; // default to 3h if nothing there
-		const timeOffset = calculateTimeOffset(lastQuery);
-		const startTime = new Date(Date.now() - timeOffset)
+        const timeOffset = calculateTimeOffset(lastQuery);
+        const startTime = new Date(Date.now() - timeOffset)
 
         const measurements = await Measurement.find({
             location,
             timestamp: { $gte: startTime }
         }).sort({ timestamp: 1 });
-		
-		if (measurements.length === 0) {
+
+        if (measurements.length === 0) {
             return res.status(200).json({
                 success: true,
                 location,
@@ -121,6 +123,12 @@ const classifyNoise = (average) => {
 router.get("/ambiance/:location/portrait", async (req, res) => {
     try {
         const { location } = req.params;
+        const cacheKey = 'portrait:${location}';
+
+        const cached = cache.get(cacheKey);
+        if (cached) {
+            return res.status(200).json({ ...cached, fromCache: true });
+        }
 
         const cutoffTime = new Date(Date.now() - 30 * 60 * 1000);
 
@@ -134,7 +142,8 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
             .sort({ timestamp: -1 });
 
         if (measurements.length === 0) {
-            return res.status(200).json({
+            // Refactored par Claude
+            const payload = {
                 success: true,
                 location,
                 message: "Aucune donnée récente.",
@@ -144,13 +153,16 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                     humanProximity: lastObservation ? lastObservation.proximity : "Inconnue",
                     reportedVibe: lastObservation ? lastObservation.vibe : "Inconnue"
                 }
-            });
+            };
+            cache.set(cacheKey, payload, cacheTimer);
+            return res.status(200).json(payload);
         }
         const average = measurements.reduce((sum, m) => sum + m.value, 0) / measurements.length;
 
         const classification = classifyNoise(average);
 
-        return res.status(200).json({
+        // Même refactor par Claude qu'à la ligne 128
+        const payload = {
             success: true,
             location,
             generatedAt: new Date().toISOString(),
@@ -161,7 +173,10 @@ router.get("/ambiance/:location/portrait", async (req, res) => {
                 humanProximity: lastObservation ? lastObservation.proximity : "Inconnue",
                 reportedVibe: lastObservation ? lastObservation.vibe : "Inconnue"
             }
-        });
+        };
+
+        cache.set(cacheKey, payload, PORTRAIT_CACHE_TTL_MS);
+        return res.status(200).json(payload);
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
