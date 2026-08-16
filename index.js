@@ -16,6 +16,7 @@ const app = express();
 const allowedOrigins = [
     'http://localhost:7000',
     'https://ift3225-ambiance-d-un-lieu-2-4prn.onrender.com',
+    'https://frontend-test-2-d8sx.onrender.com',
 ];
 
 app.use(cors({
