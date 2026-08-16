@@ -3,6 +3,7 @@ dotenv.config();
 
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 const devicesRouter = require('./Routes/devicesRouter');
 const { router: collectRouter } = require('./Routes/collectRouter');
@@ -11,6 +12,18 @@ const { router: userRouter } = require('./Routes/userRouter');
 const { router : locationRouter} = require('./Routes/locationRouter');
 
 const app = express();
+
+const allowedOrigins = [
+    'http://localhost:7000',
+    'https://ift3225-ambiance-d-un-lieu-2-4prn.onrender.com',
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
+}));
+
 app.use(express.json());
 
 
