@@ -17,6 +17,14 @@ _____________________________
 - Node.js (pour lancer npm install / npm run dev dans le dossier client)
 - L'API backend doit être en marche (voir section "Pour commencer (backend)")
 
+
+# Lancer le site avec URL de deploiement.
+
+Il suffit tout simplement d'ouvrir l'url du frontend: https://frontend-x6nx.onrender.com
+Voici l'url du backend: https://ift3225-ambiance-d-un-lieu.onrender.com
+
+
+# Launch du site sans URL de deploiement
 _______________________
 Pour commencer (backend):
 _______________________
@@ -114,6 +122,9 @@ retourne les heures les plus calmes par créneaux horaires (trié)
 
 GET /api/ambiance/:location/history      
 historique des données selon le paramètre last
+
+
+
 
 GET /api/ambiance/:location/portrait     
 portrait sémantique (résumé) des 30 dernières minutes
