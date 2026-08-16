@@ -20,8 +20,8 @@ const allowedOrigins = [
     'https://ift3225-ambiance-d-un-lieu-2-4prn.onrender.com', // Backend test
     'https://frontend-test-2-d8sx.onrender.com', // Frontend test
     //Render officiel
-    'https://ift3225-ambiance-d-un-lieu.onrender.com' // Backend
-    'https://frontend-x6nx.onrender.com' // Frontend
+    'https://ift3225-ambiance-d-un-lieu.onrender.com', // Backend
+    'https://frontend-x6nx.onrender.com', // Frontend
 ];
 
 app.use(cors({
