@@ -1,5 +1,5 @@
 import * as cache from './cacheFrontend.js';
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 const cacheTimer = 45 * 1000;
 
