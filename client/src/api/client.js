@@ -1,9 +1,10 @@
 import * as cache from './cacheFrontend.js';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const cacheTimer = 45 * 1000;
 
 export async function registerUser({ email, username, password }) {
-    const res = await fetch(`api/register`, {
+    const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, username, password }),
@@ -16,7 +17,7 @@ export async function registerUser({ email, username, password }) {
 }
 
 export async function loginUser({ email, password }) {
-    const res = await fetch(`api/login`, {
+    const res = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -39,7 +40,7 @@ export async function getLocations() {
 }
 
 export async function getLocationByName(name) {
-    const res = await fetch(`api/locations/${encodeURIComponent(name)}`);
+    const res = await fetch(`${API_BASE_URL}/api/locations/${encodeURIComponent(name)}`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Ce lieu est introuvable');
@@ -52,7 +53,7 @@ export async function addFavoriteLocation(name, token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
 
-    const res = await fetch('api/userLocations', {
+    const res = await fetch(`${API_BASE_URL}/api/userLocations`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -73,7 +74,7 @@ export async function removeFavoriteLocation(name, token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
-    const res = await fetch('api/userLocations', {
+    const res = await fetch(`${API_BASE_URL}/api/userLocations`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -91,7 +92,7 @@ export async function removeFavoriteLocation(name, token) {
 }
 
 export async function logout(token) {
-    const res = await fetch('api/logout', {
+    const res = await fetch(`${API_BASE_URL}/api/logout`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`
@@ -104,7 +105,7 @@ export async function logout(token) {
 
 
 export async function getQuietHours(location) {
-    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/quiet-hours`);
+    const res = await fetch(`${API_BASE_URL}/api/ambiance/${encodeURIComponent(location)}/quiet-hours`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement des créneaux calmes');
@@ -114,7 +115,7 @@ export async function getQuietHours(location) {
 
 
 export async function getHistory(location, last = '3h') {
-    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/history?last=${last}`);
+    const res = await fetch(`${API_BASE_URL}/api/ambiance/${encodeURIComponent(location)}/history?last=${last}`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || "Erreur lors du chargement de l'historique");
@@ -131,7 +132,7 @@ export async function getPortrait(location) {
         return cached;
     }
 
-    const res = await fetch(`api/ambiance/${encodeURIComponent(location)}/portrait`);
+    const res = await fetch(`${API_BASE_URL}/api/ambiance/${encodeURIComponent(location)}/portrait`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement du portrait');
@@ -146,7 +147,7 @@ export async function getFavoriteLocations(token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
 
-    const res = await fetch(`api/userLocations?locationCategory=favorite`, {
+    const res = await fetch(`${API_BASE_URL}/api/userLocations?locationCategory=favorite`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -163,7 +164,7 @@ export async function submitObservation({ location, proximity, vibe, notes }, to
         throw new Error("Utilisateur n'est pas connecté");
     }
 
-    const res = await fetch(`api/observations`, {
+    const res = await fetch(`${API_BASE_URL}/api/observations`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -192,7 +193,7 @@ export async function getObservedLocations(token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
 
-    const res = await fetch(`api/userLocations?locationCategory=observed`, {
+    const res = await fetch(`${API_BASE_URL}/api/userLocations?locationCategory=observed`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -208,7 +209,7 @@ export async function addNewLocation(locationObject, token) {
     if (!token) {
         throw new Error("Utilisateur n'est pas connecté");
     }
-    const res = await fetch('api/locations', {
+    const res = await fetch(`${API_BASE_URL}/api/locations`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
