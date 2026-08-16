@@ -31,7 +31,7 @@ export async function loginUser({ email, password }) {
 
 
 export async function getLocations() {
-    const res = await fetch(`${VITE_API_URL}api/locations`);
+    const res = await fetch(`${VITE_API_URL}/api/locations`);
     const data = await res.json();
     if (!res.ok) {
         throw new Error(data.error || 'Erreur lors du chargement des lieux');
