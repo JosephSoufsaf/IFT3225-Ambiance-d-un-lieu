@@ -19,8 +19,7 @@ const UserSchema = new mongoose.Schema({
     },
     authTokens: [{
         authToken: {
-            type: String,
-            unique: true
+            type: String
         }
     }],
     savedLocations: [{
