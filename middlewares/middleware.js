@@ -37,7 +37,7 @@ async function userValidation (req, res, next) {
         next();
     
     } catch (error) {
-        next(error);
+        res.status(400).json({ success: false, error: error.message });
     }
 }
 
