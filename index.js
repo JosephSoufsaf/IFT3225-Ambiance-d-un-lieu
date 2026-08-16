@@ -14,9 +14,14 @@ const { router : locationRouter} = require('./Routes/locationRouter');
 const app = express();
 
 const allowedOrigins = [
+    // Utilisation locale
     'http://localhost:7000',
-    'https://ift3225-ambiance-d-un-lieu-2-4prn.onrender.com',
-    'https://frontend-test-2-d8sx.onrender.com',
+    // Render Test
+    'https://ift3225-ambiance-d-un-lieu-2-4prn.onrender.com', // Backend test
+    'https://frontend-test-2-d8sx.onrender.com', // Frontend test
+    //Render officiel
+    'https://ift3225-ambiance-d-un-lieu.onrender.com' // Backend
+    'https://frontend-x6nx.onrender.com' // Frontend
 ];
 
 app.use(cors({
